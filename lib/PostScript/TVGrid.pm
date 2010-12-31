@@ -107,14 +107,16 @@ has channel_width => (
   is      => 'ro',
   isa     => Dimension,
   coerce  => 1,
-  default => 54,
+  lazy    => 1,
+  builder => '_compute_channel_width',
 );
 
 has five_min_width => (
   is      => 'ro',
   isa     => Dimension,
   coerce  => 1,
-  default => 7.125,
+  lazy    => 1,
+  builder => '_compute_five_min_width',
 );
 
 has half_width => (
@@ -251,19 +253,19 @@ has paper_size => (
 
 =attr-fmt top_margin
 
-This the top margin (default 36, or 1/2 inch).
+This is the top margin (default 36, or 1/2 inch).
 
 =attr-fmt bottom_margin
 
-This the bottom margin (default 36, or 1/2 inch).
+This is the bottom margin (default 36, or 1/2 inch).
 
 =attr-fmt left_margin
 
-This the left margin (default 36, or 1/2 inch).
+This is the left margin (default 22, or about 0.3 inch).
 
 =attr-fmt right_margin
 
-This the bottom margin (default 36, or 1/2 inch).
+This is the right margin (default 22, or about 0.3 inch).
 
 =cut
 
@@ -288,7 +290,7 @@ has left_margin => (
 has right_margin => (
   is      => 'ro',
   isa     => Int,
-  default => 36,
+  default => 22,
 );
 
 =attr-fmt landscape
@@ -349,6 +351,31 @@ sub _build_ps
     %{ $self->ps_parameters },
   );
 } # end _build_ps
+
+#---------------------------------------------------------------------
+sub _compute_channel_width
+{
+  my $self = shift;
+
+  my $metrics = $self->ps->get_metrics($self->title_font . '-iso',
+                                       $self->title_font_size);
+
+  my $width = max( map { $metrics->width($_->{name}) } @{ $self->channels });
+
+  $width + 2 * $self->cell_left; # Add some padding
+} # end _compute_channel_width
+
+#---------------------------------------------------------------------
+sub _compute_five_min_width
+{
+  my $self = shift;
+
+  my $cells = $self->grid_hours * 12;
+
+  my $width = do { my @bb = $self->ps->get_bounding_box;  $bb[2] - $bb[0] };
+
+  floor(($width - $self->channel_width) * 32 / $cells) * (1/32);
+} # end _compute_five_min_width
 
 #---------------------------------------------------------------------
 sub _ps_functions
