@@ -1,7 +1,9 @@
-PostScript-TVGrid version {{$version}}, released {{$date}}
+PostScript::TVGrid version {{$version}}, released {{$date}}
 
 
-This module {{ die "needs a description (README.md too)" }}.
+This module creates a grid of TV listings (using PostScript) from
+schedule data you supply.  An example script that gets data from XMLTV
+is included.
 
 
 
@@ -20,7 +22,7 @@ DEPENDENCIES
 
 
 CHANGES
-    Here's what's new in version {{$version}} of PostScript-TVGrid:
+    Here's what's new in version {{$version}} of PostScript::TVGrid:
     (See the file "Changes" for the full revision history.)
 
 {{$changes}}

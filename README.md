@@ -1,11 +1,14 @@
-PostScript-TVGrid
-=================
+PostScript::TVGrid
+==================
 
-PostScript-TVGrid is a Perl module that NEEDS A DESCRIPTION.
+PostScript::TVGrid is a Perl module that creates a grid of TV listings
+(using PostScript) from schedule data you supply.  An example script
+that gets data from [XMLTV](http://xmltv.org/) is included.
 
-This is a Git repository where development of PostScript-TVGrid
+
+This is a Git repository where development of PostScript::TVGrid
 takes place.  For more information, visit
-[PostScript-TVGrid on CPAN](http://search.cpan.org/dist/PostScript-TVGrid/).
+[PostScript::TVGrid on CPAN](http://search.cpan.org/dist/PostScript-TVGrid/).
 
 
 
