@@ -71,13 +71,13 @@ has extra_height => (
   default => sub { shift->cell_font_size },
 );
 
-has date_font => (
+has heading_font => (
   is      => 'ro',
   isa     => Str,
   default => 'Helvetica-Bold',
 );
 
-has date_font_size => (
+has heading_font_size => (
   is      => 'ro',
   isa     => Dimension,
   coerce  => 1,
@@ -186,7 +186,7 @@ has line_height => (
   default => 10,
 );
 
-has date_baseline => (
+has heading_baseline => (
   is      => 'ro',
   isa     => Dimension,
   coerce  => 1,
@@ -524,8 +524,8 @@ END PS INIT
   push @hlines, $line_height;
 
   $functions .= <<'EOT';
-  DateFont setfont
-  $channel_width %{$grid_height + $date_baseline} S
+  HeadFont setfont
+  $channel_width %{$grid_height + $heading_baseline} S
 
   P1
   newpath
@@ -596,15 +596,15 @@ sub run
 
   my $ps = $self->ps;
 
-  $ps->need_resource(font => $self->cell_font, $self->date_font,
+  $ps->need_resource(font => $self->cell_font, $self->heading_font,
                      $self->title_font);
 
   $ps->add_function($self->_ps_functions);
 
   { my $setup = <<'END SETUP';
-/CellFont   /$cell_font-iso  findfont  $cell_font_size  scalefont  def
-/DateFont   /$date_font-iso  findfont  $date_font_size  scalefont  def
-/TitleFont  /$title_font-iso findfont  $title_font_size scalefont  def
+/CellFont   /$cell_font-iso    findfont  $cell_font_size    scalefont  def
+/HeadFont   /$heading_font-iso findfont  $heading_font_size scalefont  def
+/TitleFont  /$title_font-iso   findfont  $title_font_size   scalefont  def
 END SETUP
     $self->_ps_eval(\$setup);
     $ps->add_setup($setup);
@@ -626,8 +626,8 @@ END SETUP
     my $bottom_margin = $self->bottom_margin;
     my $top_margin    = $self->top_margin;
 
-    my $total_height = ($grid_height + $self->title_baseline +
-                        $self->title_font_size);
+    my $total_height = ($grid_height + $self->heading_baseline +
+                        $self->heading_font_size);
     my @bb = $ps->get_bounding_box;
 
     push @grid_offsets, $bb[3] - $total_height;
