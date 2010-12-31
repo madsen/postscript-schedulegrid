@@ -628,14 +628,15 @@ END SETUP
   my($height,$two_line,$in_page);
   my $vpos;
 
-  my $channels = $self->channels;
-  my $grid_top = $self->grid_top;
-  my $line_height = $self->line_height;
+  my $channels     = $self->channels;
+  my $grid_top     = $self->grid_top;
+  my $line_height  = $self->line_height;
   my $extra_height = $self->extra_height;
-  my $start = $self->start_date;
-  my $left_mar = $self->left_margin;
+  my $start        = $self->start_date;
+  my $stop_date    = $self->end_date;
+  my $left_mar     = $self->left_margin;
 
-  for my $page (1) {
+  while ($start < $stop_date) {
     my $end = $start->clone->add(hours => $self->grid_hours);
 
     $vpos = $grid_top - $line_height;
@@ -674,7 +675,8 @@ END SETUP
     } # end for @$channels
 
     $self->_end_grid_page;
-  } # end for page
+    $self->start_date($start = $end);
+  } # end while $start < $stop_date
 
   $self->output(@_) if @_;
 } # end run
