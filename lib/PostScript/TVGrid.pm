@@ -28,6 +28,7 @@ use MooseX::Types::DateTime (); # Just load coercions
 use PostScript::TVGrid::Types ':all';
 
 use List::Util qw(max min);
+use POSIX qw(floor);
 use PostScript::File 2.00;      # Need metrics support
 
 use namespace::autoclean;
@@ -176,22 +177,6 @@ has cell_left => (
   isa     => Dimension,
   coerce  => 1,
   default => 1.4,
-);
-
-has grid_bottom => (
-  is      => 'ro',
-  isa     => Dimension,
-  coerce  => 1,
-  default => 36,
-);
-
-has grid_top => (
-  is       => 'ro',
-  isa      => Dimension,
-  coerce   => 1,
-  lazy     => 1,
-  init_arg => undef,
-  default  => sub { my $s = shift; $s->grid_bottom + $s->grid_height },
 );
 
 has line_height => (
@@ -505,16 +490,16 @@ sub _ps_functions
 
 /prg
 {
-  (Channel) $cell_left %{$grid_top - $line_height + $cell_bot} S
-  (Channel) $cell_left %{$grid_bottom + $cell_bot} S
+  (Channel) $cell_left %{$grid_height - $line_height + $cell_bot} S
+  (Channel) $cell_left $cell_bot S
 
   TitleFont setfont
   %{$channel_width + $hour_width * $grid_hours - $half_width/2}
   -$half_width $channel_width
   % stack (TIME XPOS)
   {
-    dup %{$grid_top - $line_height + $title_baseline} 3 index showcenter
-    %{$grid_bottom + $title_baseline} 3 -1 roll showcenter
+    dup %{$grid_height - $line_height + $title_baseline} 3 index showcenter
+    $title_baseline 3 -1 roll showcenter
   } for
 
 END PS INIT
@@ -526,7 +511,7 @@ END PS INIT
   my $line_height    = $self->line_height;
   my $title_baseline = $self->title_baseline;
   my $extra_height   = $self->extra_height;
-  my $vpos = $self->grid_top - $line_height;
+  my $vpos = $self->grid_height - $line_height;
   $functions .= '  ';
   foreach my $c (@$channels) {
       push @hlines, $vpos;
@@ -536,22 +521,22 @@ END PS INIT
       $functions .= $ps->pstr($c->{name}) . ($vpos+$title_baseline+$ex/2);
   }
   $functions .= "\n  " . @$channels . " {$cell_left exch S} repeat\n\n";
-  push @hlines, $self->grid_bottom + $line_height;
+  push @hlines, $line_height;
 
   $functions .= <<'EOT';
   DateFont setfont
-  $channel_width %{$grid_top + $date_baseline} S
+  $channel_width %{$grid_height + $date_baseline} S
 
   P1
   newpath
-  0 $grid_bottom moveto
+  0 0 moveto
   $grid_width 0 rlineto
-  $grid_width $grid_top lineto
-  0 $grid_top lineto
+  $grid_width $grid_height lineto
+  0 $grid_height lineto
   closepath stroke
 
   %{$channel_width + $half_width} $hour_width %{$grid_width - $five_min_width}
-  {dup %{$grid_top-$line_height} $line_height V $grid_bottom $line_height V} for
+  {dup %{$grid_height-$line_height} $line_height V 0 $line_height V} for
 EOT
 
     $functions .=  '  '.join(' ',@hlines)."\n  ".scalar @hlines;
@@ -560,8 +545,8 @@ EOT
 
   P2
   %{$channel_width + $hour_width} $hour_width %{$grid_width-1}
-  {dup %{$grid_top-$line_height} $line_height V $grid_bottom $line_height V} for
-  $channel_width $grid_bottom %{$grid_top - $grid_bottom} V
+  {dup %{$grid_height-$line_height} $line_height V 0 $line_height V} for
+  $channel_width 0 $grid_height V
 } def
 EOT
 
@@ -629,54 +614,83 @@ END SETUP
   my $vpos;
 
   my $channels     = $self->channels;
-  my $grid_top     = $self->grid_top;
+  my $grid_height  = $self->grid_height;
   my $line_height  = $self->line_height;
   my $extra_height = $self->extra_height;
   my $start        = $self->start_date;
   my $stop_date    = $self->end_date;
   my $left_mar     = $self->left_margin;
 
-  while ($start < $stop_date) {
-    my $end = $start->clone->add(hours => $self->grid_hours);
+  my @grid_offsets;
+  {
+    my $bottom_margin = $self->bottom_margin;
+    my $top_margin    = $self->top_margin;
 
-    $vpos = $grid_top - $line_height;
+    my $total_height = ($grid_height + $self->title_baseline +
+                        $self->title_font_size);
+    my @bb = $ps->get_bounding_box;
+
+    push @grid_offsets, $bb[3] - $total_height;
+
+    my $page_height = $bb[3] - $bb[1];
+
+    my $grids = floor($page_height / $total_height);
+    if ($grids > 1) {
+      my $spacing = to_Dimension(
+        $total_height + ($page_height - $grids * $total_height) / ($grids-1)
+      );
+      push @grid_offsets, (-$spacing) x ($grids-1);
+    }
+  } # end block for computing @grid_offsets
+
+ PAGE:
+  while (1) {
     $ps->newpage if $in_page;
     $in_page = 1;
-    $ps->add_to_page("$left_mar 0 translate\n".
-                     "\nCellFont setfont\n0 setlinecap\n");
+    $ps->add_to_page("$left_mar 0 translate\n");
 
-    for my $channel (@$channels) {
-      $two_line = $channel->{lines} - 1; # FIXME
-      $vpos = $channel->{vpos};
-      $height = $line_height + $two_line*$extra_height;
+    foreach my $grid_offset (@grid_offsets) {
+      my $end = $start->clone->add(hours => $self->grid_hours);
 
-      my $schedule = $channel->{schedule};
+      $vpos = $grid_height - $line_height;
 
-      while (@$schedule and $schedule->[0][iStart] < $end) {
-        my $s = shift @$schedule;
+      $ps->add_to_page("0 $grid_offset translate\n" .
+                       "CellFont setfont\n0 setlinecap\n");
 
-        my $left = $self->_add_vline(max($s->[iStart], $start), $height,$vpos);
-        my $right = $self->_add_vline(min($s->[iEnd], $end), $height,$vpos);
-        $ps->add_to_page(sprintf "%s %s %s %s C\n%s",
-                         $height, $right - $left, $left, $vpos,
-                         defined $s->[iMark] ? "$s->[iMark]\n" : '');
-#        print PS $1 if $trailer =~ /\{(.+?)\}/;
-        if ($two_line) {
-          $self->_two_line_box($left,$right,$vpos,$s->[iShow]);
-        } else {
-          $self->_one_line_box($left,$right,$vpos,$s->[iShow]);
-        }
-        $ps->add_to_page("R\n");
-        if ($s->[iEnd] > $end) {
-          unshift @$schedule, $s;
-          last;
-        }
-      } # end while @$schedule
-    } # end for @$channels
+      for my $channel (@$channels) {
+        $two_line = $channel->{lines} - 1; # FIXME
+        $vpos = $channel->{vpos};
+        $height = $line_height + $two_line*$extra_height;
 
-    $self->_end_grid_page;
-    $self->start_date($start = $end);
-  } # end while $start < $stop_date
+        my $schedule = $channel->{schedule};
+
+        while (@$schedule and $schedule->[0][iStart] < $end) {
+          my $s = shift @$schedule;
+
+          my $left = $self->_add_vline(max($s->[iStart], $start), $height,$vpos);
+          my $right = $self->_add_vline(min($s->[iEnd], $end), $height,$vpos);
+          $ps->add_to_page(sprintf "%s %s %s %s C\n%s",
+                           $height, $right - $left, $left, $vpos,
+                           defined $s->[iMark] ? "$s->[iMark]\n" : '');
+          if ($two_line) {
+            $self->_two_line_box($left,$right,$vpos,$s->[iShow]);
+          } else {
+            $self->_one_line_box($left,$right,$vpos,$s->[iShow]);
+          }
+          $ps->add_to_page("R\n");
+          if ($s->[iEnd] > $end) {
+            unshift @$schedule, $s;
+            last;
+          }
+        } # end while @$schedule
+      } # end for @$channels
+
+      $self->_end_grid_page;
+      $self->start_date($start = $end);
+
+      last PAGE unless $start < $stop_date;
+    } # end foreach grid
+  } # end PAGE loop
 
   $self->output(@_) if @_;
 } # end run
@@ -714,7 +728,7 @@ sub _end_grid_page
 {
   my $self = shift;
 
-  my $vpos = $self->grid_top - $self->line_height;
+  my $vpos = $self->grid_height - $self->line_height;
   my $time = $self->start_date->clone;
 
   my $code = $self->ps->pstr($time->format_cldr('EEEE, MMMM d, YYYY'));
