@@ -25,6 +25,7 @@ use Moose;
 
 use MooseX::Types::Moose qw(ArrayRef Bool HashRef Int Num Str);
 use MooseX::Types::DateTime (); # Just load coercions
+use PostScript::TVGrid::Types ':all';
 
 use List::Util qw(max min);
 use PostScript::File 2.00;      # Need metrics support
@@ -45,13 +46,14 @@ has cell_font => (
 
 has cell_font_size => (
   is      => 'ro',
-  isa     => Num,
+  isa     => Dimension,
+  coerce  => 1,
   default => 7,
 );
 
 has _metrics => (
   is       => 'ro',
-  isa      => 'PostScript::File::Metrics',
+  isa      => FontMetrics,
   init_arg => undef,
   lazy     => 1,
   default  => sub {
@@ -62,7 +64,8 @@ has _metrics => (
 
 has extra_height => (
   is      => 'ro',
-  isa     => Num,
+  isa     => Dimension,
+  coerce  => 1,
   lazy    => 1,
   default => sub { shift->cell_font_size },
 );
@@ -75,7 +78,8 @@ has date_font => (
 
 has date_font_size => (
   is      => 'ro',
-  isa     => Num,
+  isa     => Dimension,
+  coerce  => 1,
   default => 12,
 );
 
@@ -87,7 +91,8 @@ has title_font => (
 
 has title_font_size => (
   is      => 'ro',
-  isa     => Num,
+  isa     => Dimension,
+  coerce  => 1,
   default => 9,
 );
 
@@ -99,19 +104,22 @@ has grid_hours => (
 
 has channel_width => (
   is      => 'ro',
-  isa     => Num,
+  isa     => Dimension,
+  coerce  => 1,
   default => 54,
 );
 
 has five_min_width => (
   is      => 'ro',
-  isa     => Num,
+  isa     => Dimension,
+  coerce  => 1,
   default => 7.125,
 );
 
 has half_width => (
   is       => 'ro',
-  isa      => Num,
+  isa      => Dimension,
+  coerce   => 1,
   lazy     => 1,
   init_arg => undef,
   default  => sub { shift->five_min_width * 6 },
@@ -119,7 +127,8 @@ has half_width => (
 
 has hour_width => (
   is       => 'ro',
-  isa      => Num,
+  isa      => Dimension,
+  coerce   => 1,
   lazy     => 1,
   init_arg => undef,
   default  => sub { shift->five_min_width * 12 },
@@ -133,7 +142,8 @@ has channels => (
 
 has grid_height => (
   is       => 'ro',
-  isa      => Num,
+  isa      => Dimension,
+  coerce   => 1,
   lazy     => 1,
   init_arg => undef,
   default  => sub { my $s = shift; my $c = $s->channels; my $extra = 0;
@@ -145,7 +155,8 @@ has grid_height => (
 
 has grid_width => (
   is       => 'ro',
-  isa      => Num,
+  isa      => Dimension,
+  coerce   => 1,
   lazy     => 1,
   init_arg => undef,
   default  => sub { my $s = shift;
@@ -155,25 +166,29 @@ has grid_width => (
 
 has cell_bot => (
   is      => 'ro',
-  isa     => Num,
+  isa     => Dimension,
+  coerce  => 1,
   default => 2.5,
 );
 
 has cell_left => (
   is      => 'ro',
-  isa     => Num,
+  isa     => Dimension,
+  coerce  => 1,
   default => 1.4,
 );
 
 has grid_bottom => (
   is      => 'ro',
-  isa     => Num,
+  isa     => Dimension,
+  coerce  => 1,
   default => 36,
 );
 
 has grid_top => (
   is       => 'ro',
-  isa      => Num,
+  isa      => Dimension,
+  coerce   => 1,
   lazy     => 1,
   init_arg => undef,
   default  => sub { my $s = shift; $s->grid_bottom + $s->grid_height },
@@ -181,13 +196,15 @@ has grid_top => (
 
 has line_height => (
   is      => 'ro',
-  isa     => Num,
+  isa     => Dimension,
+  coerce  => 1,
   default => 10,
 );
 
 has date_baseline => (
   is      => 'ro',
-  isa     => Num,
+  isa     => Dimension,
+  coerce  => 1,
   default => 3,
 );
 
@@ -212,7 +229,8 @@ has time_zone => (
 
 has title_baseline => (
   is      => 'ro',
-  isa     => Num,
+  isa     => Dimension,
+  coerce  => 1,
   default => 1.7,
 );
 
