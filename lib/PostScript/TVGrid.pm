@@ -600,18 +600,24 @@ sub _normalize_channels
   my $self = shift;
 
   my $channels = $self->channels;
-  my $start    = $self->start_date;
   my $tz       = $self->time_zone;
 
   for my $c (@$channels) {
     $c->{lines} ||= 1;
     my $schedule = $c->{schedule};
-    shift @$schedule while @$schedule and $schedule->[0][iEnd] < $start;
 
+    # Convert any floating times to specified time zone:
     for my $rec (@$schedule) {
-      $rec->[$_]->set_time_zone($tz) for (iStart, iEnd);
-    }
-  }
+      for my $date (@$rec[iStart, iEnd]) {
+        $date->set_time_zone($tz) if $date->time_zone->is_floating;
+      }
+    } # end for $rec in @$schedule
+
+    # Make sure the schedule is sorted:
+    @$schedule = sort {
+      DateTime->compare_ignore_floating($a->[iStart], $b->[iStart])
+    } @$schedule;
+  } # end for $c in @$channels
 } # end _normalize_channels
 
 #---------------------------------------------------------------------
@@ -621,6 +627,7 @@ sub run
 
   $self->_normalize_channels;
 
+  # Initialise PostScript::File object:
   my $ps = $self->ps;
 
   $ps->need_resource(font => $self->cell_font, $self->heading_font,
@@ -637,9 +644,7 @@ END SETUP
     $ps->add_setup($setup);
   }
 
-  my($height,$two_line,$in_page);
-  my $vpos;
-
+  my $in_page;
   my $channels     = $self->channels;
   my $grid_height  = $self->grid_height;
   my $line_height  = $self->line_height;
@@ -648,6 +653,14 @@ END SETUP
   my $stop_date    = $self->end_date;
   my $left_mar     = $self->left_margin;
 
+  # Make sure start_date & end_date are in the specified time zone:
+  {
+    my $tz = $self->time_zone;
+    $start->set_time_zone($tz);
+    $stop_date->set_time_zone($tz);
+  }
+
+  # Decide if we have room for multiple grids on a page:
   my @grid_offsets;
   {
     my $bottom_margin = $self->bottom_margin;
@@ -667,9 +680,10 @@ END SETUP
         $total_height + ($page_height - $grids * $total_height) / ($grids-1)
       );
       push @grid_offsets, (-$spacing) x ($grids-1);
-    }
+    } # end if multiple grids
   } # end block for computing @grid_offsets
 
+  # Loop for each page:
  PAGE:
   while (1) {
     $ps->newpage if $in_page;
@@ -679,17 +693,19 @@ END SETUP
     foreach my $grid_offset (@grid_offsets) {
       my $end = $start->clone->add(hours => $self->grid_hours);
 
-      $vpos = $grid_height - $line_height;
+      my $vpos = $grid_height - $line_height;
 
       $ps->add_to_page("0 $grid_offset translate\n" .
                        "CellFont setfont\n0 setlinecap\n");
 
       for my $channel (@$channels) {
-        $two_line = $channel->{lines} - 1; # FIXME
+        my $two_line = $channel->{lines} - 1; # FIXME
         $vpos = $channel->{vpos};
-        $height = $line_height + $two_line*$extra_height;
+        my $height = $line_height + $two_line*$extra_height;
 
         my $schedule = $channel->{schedule};
+
+        shift @$schedule while @$schedule and $schedule->[0][iEnd] < $start;
 
         while (@$schedule and $schedule->[0][iStart] < $end) {
           my $s = shift @$schedule;
