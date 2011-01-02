@@ -371,11 +371,8 @@ sub _compute_five_min_width
 {
   my $self = shift;
 
-  my $cells = $self->grid_hours * 12;
-
-  my $width = do { my @bb = $self->ps->get_bounding_box;  $bb[2] - $bb[0] };
-
-  floor(($width - $self->channel_width) * 32 / $cells) * (1/32);
+  floor(8 * ($self->ps->get_printable_width - $self->channel_width) /
+        (3 * $self->grid_hours)) * (1/32);
 } # end _compute_five_min_width
 
 #---------------------------------------------------------------------
