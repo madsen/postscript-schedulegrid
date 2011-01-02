@@ -29,7 +29,7 @@ use PostScript::TVGrid::Types ':all';
 
 use List::Util qw(max min);
 use POSIX qw(floor);
-use PostScript::File 2.00;      # Need metrics support
+use PostScript::File 2.10;      # Need improved API
 
 use namespace::autoclean;
 
@@ -348,6 +348,7 @@ sub _build_ps
     file_ext    => '',
     font_suffix => '-iso',
     landscape   => $self->landscape,
+    newpage     => 0,
     %{ $self->ps_parameters },
   );
 } # end _build_ps
@@ -644,7 +645,6 @@ END SETUP
     $ps->add_setup($setup);
   }
 
-  my $in_page;
   my $channels     = $self->channels;
   my $grid_height  = $self->grid_height;
   my $line_height  = $self->line_height;
@@ -686,8 +686,7 @@ END SETUP
   # Loop for each page:
  PAGE:
   while (1) {
-    $ps->newpage if $in_page;
-    $in_page = 1;
+    $ps->newpage;
     $ps->add_to_page("$left_mar 0 translate\n");
 
     foreach my $grid_offset (@grid_offsets) {
