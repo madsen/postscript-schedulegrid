@@ -770,7 +770,7 @@ sub _end_grid_page
   my $vpos = $self->grid_height - $self->line_height;
   my $time = $self->start_date->clone;
 
-  my $code = $self->ps->pstr($time->format_cldr('EEEE, MMMM d, YYYY'));
+  my $code = $self->ps->pstr($time->format_cldr('EEEE, MMMM d, y'));
   for (1 .. $self->grid_hours) {
     $code .= $time->format_cldr('(h a)(h:30)');
     $time->add(hours => 1);
