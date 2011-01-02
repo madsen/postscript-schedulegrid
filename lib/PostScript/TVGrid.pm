@@ -397,14 +397,14 @@ sub _ps_functions
 
 /G
 {
-  0.9 setgray
+  0.85 setgray
   clippath fill
   0 setgray
 } def
 
 /GL % Fill clippath with grey bars slanting to the left
 {
-  0.9 setgray
+  0.85 setgray
   6 setlinewidth
   2 setlinecap
   clippath pathbbox newpath     % (LLX LLY URX URY)
@@ -424,7 +424,7 @@ sub _ps_functions
 
 /GR % Fill clippath with grey bars slanting to the right
 {
-  0.9 setgray
+  0.85 setgray
   6 setlinewidth
   2 setlinecap
   clippath pathbbox newpath     % (LLX LLY URX URY)
