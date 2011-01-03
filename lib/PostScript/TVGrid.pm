@@ -402,14 +402,29 @@ sub _ps_functions
   0 setgray
 } def
 
-/GL % Fill clippath with grey bars slanting to the left
+/round18 % round down to a multiple of 18
+{
+  18 div  truncate  18 mul
+} bind def
+
+/prepSlantFill % common prep for GL & GR
 {
   0.85 setgray
   6 setlinewidth
   2 setlinecap
   clippath pathbbox newpath     % (LLX LLY URX URY)
+  4 2 roll                      % (URX URY LLX LLY)
+  round18                       % (URX URY LLX LLY1)
+  4 1 roll                      % (LLY1 URX URY LLX)
+  round18                       % (LLY1 URX URY LLX1)
+  4 1 roll                      % (LLX1 LLY1 URX URY)
   2 index                       % (LLX Bot URX URY LLY)
   sub                           % (LLX Bot URX Height)
+} def
+
+/GL % Fill clippath with grey bars slanting to the left
+{
+  prepSlantFill                 % (LLX Bot URX Height)
   neg dup neg 3 -1 roll add     % (Left Bot -Height Right)
   4 -1 roll                     % (Bot -Height Right Left)
   18   3 -1 roll                % (Bot Height Left 18 Right)
@@ -424,12 +439,7 @@ sub _ps_functions
 
 /GR % Fill clippath with grey bars slanting to the right
 {
-  0.85 setgray
-  6 setlinewidth
-  2 setlinecap
-  clippath pathbbox newpath     % (LLX LLY URX URY)
-  2 index                       % (LLX Bot URX URY LLY)
-  sub                           % (LLX Bot URX Height)
+  prepSlantFill                 % (LLX Bot URX Height)
   dup neg 5 -1 roll add         % (Bot URX Height Left)
   18   4 -1 roll                % (Bot Height Left 18 Right)
   % stack in FOR: (Bot Height X)
