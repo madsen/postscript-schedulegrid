@@ -27,6 +27,7 @@ use MooseX::Types::Moose qw(ArrayRef Bool HashRef Int Num Str);
 use MooseX::Types::DateTime (); # Just load coercions
 use PostScript::ScheduleGrid::Types ':all';
 
+use Carp qw(croak);
 use List::Util qw(max min);
 use POSIX qw(floor);
 use PostScript::File 2.10;      # Need improved API
@@ -778,6 +779,8 @@ sub _ps_eval
 # Any floating times in the schedule are converted to the grid's time zone.
 # The schedule is sorted by start time.
 
+our %validMark = map { $_ => 1 } qw( G GL GR ), '';
+
 sub _normalize_resources
 {
   my $self = shift;
@@ -791,10 +794,20 @@ sub _normalize_resources
 
     # Convert any floating times to specified time zone:
     for my $rec (@$schedule) {
+      croak sprintf("Invalid category '%s' in %s event at %s",
+                    $rec->[iMark], $c->{name}, $rec->[iStart])
+          unless $validMark{$rec->[iMark] // ''};
       for my $date (@$rec[iStart, iEnd]) {
         $date->set_time_zone($tz) if $date->time_zone->is_floating;
       }
     } # end for $rec in @$schedule
+
+=diag C<< Invalid category '%s' in %s event at %s >>
+
+The event associated with the specified resource and start time had a
+category that doesn't exist.
+
+=cut
 
     # Make sure the schedule is sorted:
     @$schedule = sort {
