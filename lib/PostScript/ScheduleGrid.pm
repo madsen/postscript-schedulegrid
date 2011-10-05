@@ -201,6 +201,19 @@ has hour_width => (
   default  => sub { shift->five_min_width * 12 },
 );
 
+=attr-data resource_title
+
+This is the header that will be displayed (in the L<cell_font>) at the
+top and bottom of the column of resource names.  The default is to
+have no header.  (For TV listings, you might set this to C<Channel>.)
+
+=cut
+
+has resource_title => (
+  is       => 'ro',
+  isa      => Str,
+);
+
 =attr-data resources
 
 This is an arrayref of resource information.  Resources are listed in
@@ -674,8 +687,8 @@ sub _ps_functions
 
 /prg
 {
-  (Channel) $cell_left %{$grid_height - $line_height + $cell_bot} S
-  (Channel) $cell_left $cell_bot S
+  ResourceTitle $cell_left %{$grid_height - $line_height + $cell_bot} S
+  ResourceTitle $cell_left $cell_bot S
 
   TitleFont setfont
   %{$title_width + $hour_width * $grid_hours - $half_width/2}
@@ -810,6 +823,9 @@ sub run
 /TitleFont  /$title_font-iso   findfont  $title_font_size   scalefont  def
 END SETUP
     $self->_ps_eval(\$setup);
+
+    $setup .= sprintf("/ResourceTitle %s def\n",
+                      $ps->pstr($self->resource_title // ''));
     $ps->add_setup($setup);
   }
 
