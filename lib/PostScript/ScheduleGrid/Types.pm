@@ -21,7 +21,7 @@ our $VERSION = '0.01';
 # This file is part of {{$dist}} {{$dist_version}} ({{$date}})
 
 use MooseX::Types -declare => [qw(
-  BWColor Color Dimension FontMetrics RGBColor RGBColorHex
+  BWColor Color Dimension FontMetrics RGBColor RGBColorHex TimeHeaders
 )];
 use MooseX::Types::Moose qw(ArrayRef Num Str);
 
@@ -71,6 +71,11 @@ coerce RGBColor,
 
 subtype Color,
   as BWColor|RGBColor;
+
+#---------------------------------------------------------------------
+subtype TimeHeaders,
+  as ArrayRef[Str],
+  where { @$_ == 2 };
 
 1;
 

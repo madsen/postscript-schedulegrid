@@ -92,6 +92,11 @@ has extra_height => (
   default => sub { shift->cell_font_size },
 );
 
+=attr-fmt heading_format
+
+This is the L<CLDR format|DateTime/"CLDR Patterns"> used for the date
+shown above the grid (default C<EEEE, MMMM d, y>).
+
 =attr-fmt heading_font
 
 This is the name of the font used for the date shown above the grid
@@ -100,6 +105,13 @@ This is the name of the font used for the date shown above the grid
 =attr-fmt heading_font_size
 
 This is the size of the font used for the date (default 12).
+
+=attr-fmt time_headers
+
+This is an arrayref of two strings containing the CLDR formats used
+for the headers displaying the time (default S<C<['h a', 'h:mm']>>).
+The first string is used on the hour, and the second is used on the
+half-hour.
 
 =attr-fmt title_font
 
@@ -112,6 +124,12 @@ This is the size of the font used for resource names & times (default 9).
 
 =cut
 
+has heading_format => (
+  is      => 'ro',
+  isa     => Str,
+  default => 'EEEE, MMMM d, y',
+);
+
 has heading_font => (
   is      => 'ro',
   isa     => Str,
@@ -123,6 +141,12 @@ has heading_font_size => (
   isa     => Dimension,
   coerce  => 1,
   default => 12,
+);
+
+has time_headers => (
+  is      => 'ro',
+  isa     => TimeHeaders,
+  default => sub { ['h a', 'h:mm'] }
 );
 
 has title_font => (
@@ -970,11 +994,13 @@ sub _end_grid_page
 
   my $vpos = $self->grid_height - $self->line_height;
   my $time = $self->start_date->clone;
+  my $ps   = $self->ps;
+  my $headers = $self->time_headers;
 
-  my $code = $self->ps->pstr($time->format_cldr('EEEE, MMMM d, y'));
-  for (1 .. $self->grid_hours) {
-    $code .= $time->format_cldr('(h a)(h:30)');
-    $time->add(hours => 1);
+  my $code = $ps->pstr($time->format_cldr($self->heading_format));
+  for (0 .. (2 * $self->grid_hours - 1)) {
+    $code .= $ps->pstr($time->format_cldr( $headers->[ $_ % 2 ]));
+    $time->add(minutes => 30);
   }
 
   $code .= "prg\n";
@@ -982,7 +1008,7 @@ sub _end_grid_page
   $code .= "P1\n";
   $code .= $self->_print_vlines(0);
 
-  $self->ps->add_to_page($code);
+  $ps->add_to_page($code);
 } # end _end_grid_page
 
 sub _print_vlines
