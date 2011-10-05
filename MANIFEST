@@ -6,6 +6,7 @@ META.yml
 Makefile.PL
 README
 lib/PostScript/TVGrid.pm
+lib/PostScript/TVGrid/Types.pm
 t/00.load.t
 t/release-pod-coverage.t
 t/release-pod-syntax.t

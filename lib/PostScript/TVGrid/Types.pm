@@ -1,5 +1,4 @@
 #---------------------------------------------------------------------
-# $Id$
 package PostScript::TVGrid::Types;
 #
 # Copyright 2010 Christopher J. Madsen
@@ -19,6 +18,7 @@ package PostScript::TVGrid::Types;
 #---------------------------------------------------------------------
 
 our $VERSION = '0.01';
+# This file is part of {{$dist}} {{$dist_version}} ({{$date}})
 
 use MooseX::Types -declare => [qw(
   BWColor Color Dimension FontMetrics RGBColor RGBColorHex
@@ -88,8 +88,8 @@ This is a number in the range 0 to 1 (where 0 is black and 1 is
 white), or an arrayref of three numbers C<[ Red, Green, Blue ]> where
 each number is in the range 0 to 1.
 
-In addition, you can specify an RGB color in the HTML hex triplet form
-prefixed by C<#> (like C<#FFFF00> or C<#FF0> for yellow).
+In addition, you can specify an RGB color as a string in the HTML hex
+triplet form prefixed by C<#> (like C<#FFFF00> or C<#FF0> for yellow).
 
 =head2 Dimension
 

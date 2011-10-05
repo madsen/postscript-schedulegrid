@@ -39,6 +39,18 @@ sub iShow  () { 2 }
 sub iMark  () { 3 }
 
 #=====================================================================
+
+=attr-fmt cell_font
+
+This is the name of the font used for program titles in the grid
+(default C<Helvetica>).
+
+=attr-fmt cell_font_size
+
+This is the size of the font used for program titles in the grid (default 7).
+
+=cut
+
 has cell_font => (
   is      => 'ro',
   isa     => Str,
@@ -63,6 +75,14 @@ has _metrics => (
   },
 );
 
+=attr-fmt extra_height
+
+This is the height added to C<line_height> for a row with multiple
+lines.  The height of a row is (S<C<line_height + (lines-1) * extra_height>>).
+Defaults to C<cell_font_size>.
+
+=cut
+
 has extra_height => (
   is      => 'ro',
   isa     => Dimension,
@@ -70,6 +90,26 @@ has extra_height => (
   lazy    => 1,
   default => sub { shift->cell_font_size },
 );
+
+=attr-fmt heading_font
+
+This is the name of the font used for the date shown above the grid
+(default C<Helvetica-Bold>).
+
+=attr-fmt heading_font_size
+
+This is the size of the font used for the date (default 12).
+
+=attr-fmt title_font
+
+This is the name of the font used for channel names & times
+(default C<Helvetica-Bold>).
+
+=attr-fmt title_font_size
+
+This is the size of the font used for channel names & times (default 9).
+
+=cut
 
 has heading_font => (
   is      => 'ro',
@@ -97,11 +137,26 @@ has title_font_size => (
   default => 9,
 );
 
+=attr-fmt grid_hours
+
+This is the number of hours that one grid will span
+(default 4 in portrait mode, 6 in landscape mode).
+
+=cut
+
 has grid_hours => (
   is      => 'ro',
   isa     => Int,
-  default => 6,
+  lazy    => 1,
+  default => sub { shift->landscape ? 6 : 4 },
 );
+
+=attr-fmt channel_width
+
+This is the width of the channels column in the grid.  By default, it
+is calculated to be just wide enough for the longest channel name.
+
+=cut
 
 has channel_width => (
   is      => 'ro',
@@ -110,6 +165,15 @@ has channel_width => (
   lazy    => 1,
   builder => '_compute_channel_width',
 );
+
+=attr-fmt five_min_width
+
+This is the width of five minutes in the grid (all durations are
+rounded to the nearest five minutes).  You should probably keep the
+default value, which is calculated based on the page margins and the
+C<channel_width>.
+
+=cut
 
 has five_min_width => (
   is      => 'ro',
@@ -136,6 +200,46 @@ has hour_width => (
   init_arg => undef,
   default  => sub { shift->five_min_width * 12 },
 );
+
+=attr-data channels
+
+This is an arrayref of channel information.  Channels are listed in
+the order they appear.  Each channel is represented by a hashref with
+the following keys:
+
+=over
+
+=item name
+
+The channel name as it should appear in the grid.  It should include
+the channel number if you want channel numbers displayed.
+
+=item lines
+
+The number of lines that should be used for program listings (default 1).
+
+=item schedule
+
+An arrayref of programs that appear on this channel.  Each program is
+represented by a 4-element arrayref: S<C<[START, STOP, NAME, CATEGORY]>>.
+
+C<START> and C<STOP> are the start and stop times (as DateTime
+objects).  C<NAME> is the name of the program as it should appear in
+the grid.  The optional C<CATEGORY> causes the program to be displayed
+specially.  It may be set to C<G> for a solid gray background, C<GL>
+for a striped gray background slanting to the left, or C<GR> for a
+striped gray background slanting to the right.
+
+The arrayref will be modified during the grid processing.  Programs
+may be listed in any order; the arrayref will be sorted automatically.
+
+=back
+
+All other keys are reserved.  Keys matching C</^x[[:upper:]]/> are
+reserved for use by programs using PostScript::TVGrid (and will be
+ignored by this module).
+
+=cut
 
 has channels => (
   is       => 'ro',
@@ -167,6 +271,27 @@ has grid_width => (
   },
 );
 
+=attr-fmt cell_bot
+
+This is the space between the bottom of a cell and the baseline of the
+text inside it (default 2.5).
+
+=attr-fmt cell_left
+
+This is the space between the left of a cell and the beginning of the
+text inside it (default 1.4).
+
+=attr-fmt line_height
+
+This is the height of a single-line row on the grid (default 10).
+
+=attr-fmt heading_baseline
+
+This is the space between the baseline of the heading and the top line
+of the grid (default 3).
+
+=cut
+
 has cell_bot => (
   is      => 'ro',
   isa     => Dimension,
@@ -195,6 +320,21 @@ has heading_baseline => (
   default => 3,
 );
 
+=attr-data start_date
+
+This is the date and time at which the listings will begin.  Required.
+
+=attr-data end_date
+
+This is the date and time at which the listings will end.  Required.
+
+=attr-data time_zone
+
+The time zone that the listings are in.  Any floating times will be
+converted to this time zone.  Defaults to your local time zone.
+
+=cut
+
 has start_date => (
   is       => 'rw',
   isa      => 'DateTime',
@@ -214,11 +354,18 @@ has time_zone => (
   default  => 'local',
 );
 
+=attr-fmt title_baseline
+
+This is the space between the baseline of a channel name or time and
+the grid line below it (default 1.6875).
+
+=cut
+
 has title_baseline => (
   is      => 'ro',
   isa     => Dimension,
   coerce  => 1,
-  default => 1.7,
+  default => 1.6875,
 );
 
 #=====================================================================
@@ -227,9 +374,9 @@ has title_baseline => (
 
 This is a hashref of additional parameters to pass to
 PostScript::File's constructor.  These values will override the
-parameters that PostScript::Report generates itself (but you should
+parameters that PostScript::TVGrid generates itself (but you should
 reserve this for things that can't be controlled through
-other PostScript::Report attributes).
+other PostScript::TVGrid attributes).
 
 =cut
 
@@ -295,7 +442,7 @@ has right_margin => (
 
 =attr-fmt landscape
 
-If set to a true value, the report will be printed in landscape mode.
+If set to a true value, the listings will be printed in landscape mode.
 The default is false.
 
 =cut
@@ -317,7 +464,7 @@ This is the L<PostScript::File> object containing the grid.
 
 This method takes the same parameters as L<PostScript::File/output>.
 You can pass a filename (and optional directory name) to store the
-report in a file.  (No extension will be added to C<$filename>, so it
+listings in a file.  (No extension will be added to C<$filename>, so it
 should normally end in ".ps".)
 
 If you don't pass a filename, then the PostScript code is returned as
@@ -592,6 +739,12 @@ EOT
 } # end _ps_functions
 
 #---------------------------------------------------------------------
+# Substitute values into a string:
+#
+# Passed a list of string references.  Each string modified in-place.
+# "$method" is replaced with the value of $self->method.
+# "%{...}" is replaced with the result of evaluating ...
+
 sub _ps_eval
 {
   my $self = shift;
@@ -603,6 +756,12 @@ sub _ps_eval
 } # end _ps_eval
 
 #---------------------------------------------------------------------
+# Clean up the list of channel data:
+#
+# Missing parameters are set to their default value.
+# Any floating times in the schedule are converted to the grid's time zone.
+# The schedule is sorted by start time.
+
 sub _normalize_channels
 {
   my $self = shift;
@@ -866,4 +1025,64 @@ __END__
 
 =head1 SYNOPSIS
 
+  use DateTime;
   use PostScript::TVGrid;
+
+  sub dt # Trivial parser to create DateTime objects
+  {
+    my %dt = qw(time_zone local);
+    @dt{qw( year month day hour minute )} = split /\D+/, $_[0];
+    while (my ($k, $v) = each %dt) { delete $dt{$k} unless defined $v }
+    DateTime->new(\%dt);
+  } # end dt
+
+  my $grid = PostScript::TVGrid->new(
+    start_date => dt('2011-10-02 18'),
+    end_date   => dt('2011-10-02 22'),
+    channels => [
+      { name => '2 FOO',
+        schedule => [
+          [ dt('2011-10-02 18'), dt('2011-10-02 19'), 'Some hour-long show' ],
+          [ dt('2011-10-02 19'), dt('2011-10-02 20'), 'Another hour-long show' ],
+          [ dt('2011-10-02 20'), dt('2011-10-02 20:30'), 'Half-hour show', 'GR' ],
+          [ dt('2011-10-02 21'), dt('2011-10-02 22'), 'Show order insignificant' ],
+          [ dt('2011-10-02 20:30'), dt('2011-10-02 21'), 'Second half-hour' ],
+        ],
+      }, # end channel 2 FOO
+      { name => '1 Channel',
+        schedule => [
+          [ dt('2011-10-02 18'), dt('2011-10-02 22'),
+            'Unlike programs, the order of channels is significant.' ],
+        ],
+      }, # end channel 1 Channel
+    ],
+  );
+
+  $grid->run;
+  $grid->output('/tmp/testgrid.ps');
+
+=head1 DESCRIPTION
+
+PostScript::TVGrid generates TV listings in a grid format.  It can
+also be used to generate other types of schedules.
+
+=begin Pod::Loom-group_attr data
+
+=head2 Grid Data
+
+These attributes supply the data that will appear in the grid.
+
+=begin Pod::Loom-group_attr fmt
+
+=head2 Grid Formatting
+
+These attributes affect the PostScript::File object, or control the
+formatting of the grid.  All dimensions are in points.
+
+=begin Pod::Loom-group_attr o
+
+=head2 Other Attributes
+
+You will probably not need to use these attributes unless you are
+trying advanced tasks.
+
