@@ -16,7 +16,7 @@
 ^blib/
 \bcjm[-_]
 ^pm_to_blib$
-^PostScript-TVGrid-\d
+^PostScript-ScheduleGrid-\d
 ^_build\b
 ^Build$
 ^Build.bat$

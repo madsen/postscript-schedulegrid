@@ -1,5 +1,5 @@
 #---------------------------------------------------------------------
-package PostScript::TVGrid;
+package PostScript::ScheduleGrid;
 #
 # Copyright 2010 Christopher J. Madsen
 #
@@ -14,7 +14,7 @@ package PostScript::TVGrid;
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See either the
 # GNU General Public License or the Artistic License for more details.
 #
-# ABSTRACT: Print TV listings in a grid format
+# ABSTRACT: Print a schedule in a grid format
 #---------------------------------------------------------------------
 
 our $VERSION = '0.01';
@@ -25,13 +25,13 @@ use Moose;
 
 use MooseX::Types::Moose qw(ArrayRef Bool HashRef Int Num Str);
 use MooseX::Types::DateTime (); # Just load coercions
-use PostScript::TVGrid::Types ':all';
+use PostScript::ScheduleGrid::Types ':all';
 
 use List::Util qw(max min);
 use POSIX qw(floor);
 use PostScript::File 2.10;      # Need improved API
 
-use namespace::autoclean;
+use namespace::autoclean -also => qr/^i[[:upper:]]/;
 
 sub iStart () { 0 }
 sub iEnd   () { 1 }
@@ -42,12 +42,12 @@ sub iMark  () { 3 }
 
 =attr-fmt cell_font
 
-This is the name of the font used for program titles in the grid
+This is the name of the font used for event titles in the grid
 (default C<Helvetica>).
 
 =attr-fmt cell_font_size
 
-This is the size of the font used for program titles in the grid (default 7).
+This is the size of the font used for event titles in the grid (default 7).
 
 =cut
 
@@ -102,12 +102,12 @@ This is the size of the font used for the date (default 12).
 
 =attr-fmt title_font
 
-This is the name of the font used for channel names & times
+This is the name of the font used for resource names & times
 (default C<Helvetica-Bold>).
 
 =attr-fmt title_font_size
 
-This is the size of the font used for channel names & times (default 9).
+This is the size of the font used for resource names & times (default 9).
 
 =cut
 
@@ -151,19 +151,19 @@ has grid_hours => (
   default => sub { shift->landscape ? 6 : 4 },
 );
 
-=attr-fmt channel_width
+=attr-fmt title_width
 
-This is the width of the channels column in the grid.  By default, it
-is calculated to be just wide enough for the longest channel name.
+This is the width of the resources column in the grid.  By default, it
+is calculated to be just wide enough for the longest resource name.
 
 =cut
 
-has channel_width => (
+has title_width => (
   is      => 'ro',
   isa     => Dimension,
   coerce  => 1,
   lazy    => 1,
-  builder => '_compute_channel_width',
+  builder => '_compute_title_width',
 );
 
 =attr-fmt five_min_width
@@ -171,7 +171,7 @@ has channel_width => (
 This is the width of five minutes in the grid (all durations are
 rounded to the nearest five minutes).  You should probably keep the
 default value, which is calculated based on the page margins and the
-C<channel_width>.
+C<title_width>.
 
 =cut
 
@@ -201,47 +201,49 @@ has hour_width => (
   default  => sub { shift->five_min_width * 12 },
 );
 
-=attr-data channels
+=attr-data resources
 
-This is an arrayref of channel information.  Channels are listed in
-the order they appear.  Each channel is represented by a hashref with
+This is an arrayref of resource information.  Resources are listed in
+the order they appear.  Each resource is represented by a hashref with
 the following keys:
 
 =over
 
 =item name
 
-The channel name as it should appear in the grid.  It should include
-the channel number if you want channel numbers displayed.
+The resource name as it should appear in the grid.
 
 =item lines
 
-The number of lines that should be used for program listings (default 1).
+The number of lines that should be used for event listings (default 1).
 
 =item schedule
 
-An arrayref of programs that appear on this channel.  Each program is
+An arrayref of events associated with this resource.  Each event is
 represented by a 4-element arrayref: S<C<[START, STOP, NAME, CATEGORY]>>.
 
 C<START> and C<STOP> are the start and stop times (as DateTime
-objects).  C<NAME> is the name of the program as it should appear in
-the grid.  The optional C<CATEGORY> causes the program to be displayed
+objects).  C<NAME> is the name of the event as it should appear in
+the grid.  The optional C<CATEGORY> causes the event to be displayed
 specially.  It may be set to C<G> for a solid gray background, C<GL>
 for a striped gray background slanting to the left, or C<GR> for a
 striped gray background slanting to the right.
 
-The arrayref will be modified during the grid processing.  Programs
+The arrayref will be modified during the grid processing.  Events
 may be listed in any order; the arrayref will be sorted automatically.
 
 =back
 
 All other keys are reserved.  Keys matching C</^x[[:upper:]]/> are
-reserved for use by programs using PostScript::TVGrid (and will be
+reserved for use by programs using PostScript::ScheduleGrid (and will be
 ignored by this module).
+
+As an example, in a grid displaying TV listings, each channel would be
+a resource, and each program airing on that channel would be an event.
 
 =cut
 
-has channels => (
+has resources => (
   is       => 'ro',
   isa      => ArrayRef[HashRef],
   required => 1,
@@ -253,7 +255,7 @@ has grid_height => (
   coerce   => 1,
   lazy     => 1,
   init_arg => undef,
-  default  => sub { my $s = shift; my $c = $s->channels; my $extra = 0;
+  default  => sub { my $s = shift; my $c = $s->resources; my $extra = 0;
     $extra += $_->{lines} - 1 for @$c;
     (2 + scalar @$c) * $s->line_height +
     $extra * $s->extra_height;
@@ -267,7 +269,7 @@ has grid_width => (
   lazy     => 1,
   init_arg => undef,
   default  => sub { my $s = shift;
-    $s->channel_width + $s->five_min_width * 12 * $s->grid_hours
+    $s->title_width + $s->five_min_width * 12 * $s->grid_hours
   },
 );
 
@@ -356,7 +358,7 @@ has time_zone => (
 
 =attr-fmt title_baseline
 
-This is the space between the baseline of a channel name or time and
+This is the space between the baseline of a resource name or time and
 the grid line below it (default 1.6875).
 
 =cut
@@ -374,9 +376,9 @@ has title_baseline => (
 
 This is a hashref of additional parameters to pass to
 PostScript::File's constructor.  These values will override the
-parameters that PostScript::TVGrid generates itself (but you should
+parameters that PostScript::ScheduleGrid generates itself (but you should
 reserve this for things that can't be controlled through
-other PostScript::TVGrid attributes).
+other PostScript::ScheduleGrid attributes).
 
 =cut
 
@@ -501,24 +503,24 @@ sub _build_ps
 } # end _build_ps
 
 #---------------------------------------------------------------------
-sub _compute_channel_width
+sub _compute_title_width
 {
   my $self = shift;
 
   my $metrics = $self->ps->get_metrics($self->title_font . '-iso',
                                        $self->title_font_size);
 
-  my $width = max( map { $metrics->width($_->{name}) } @{ $self->channels });
+  my $width = max( map { $metrics->width($_->{name}) } @{ $self->resources });
 
   $width + 2 * $self->cell_left; # Add some padding
-} # end _compute_channel_width
+} # end _compute_title_width
 
 #---------------------------------------------------------------------
 sub _compute_five_min_width
 {
   my $self = shift;
 
-  floor(8 * ($self->ps->get_printable_width - $self->channel_width) /
+  floor(8 * ($self->ps->get_printable_width - $self->title_width) /
         (3 * $self->grid_hours)) * (1/32);
 } # end _compute_five_min_width
 
@@ -663,7 +665,7 @@ sub _ps_functions
 } def
 
 %---------------------------------------------------------------------
-% Print the date, times, channel names, & exterior grid:
+% Print the date, times, resource names, & exterior grid:
 %
 % HEADER TIME1 TIME2 ... TIME12
 %
@@ -676,8 +678,8 @@ sub _ps_functions
   (Channel) $cell_left $cell_bot S
 
   TitleFont setfont
-  %{$channel_width + $hour_width * $grid_hours - $half_width/2}
-  -$half_width $channel_width
+  %{$title_width + $hour_width * $grid_hours - $half_width/2}
+  -$half_width $title_width
   % stack (TIME XPOS)
   {
     dup %{$grid_height - $line_height + $title_baseline} 3 index showcenter
@@ -687,27 +689,27 @@ sub _ps_functions
 END PS INIT
 
   my @hlines;
-  my $channels = $self->channels;
-  my $ps       = $self->ps;
-  my $cell_left    = $self->cell_left;
+  my $resources      = $self->resources;
+  my $ps             = $self->ps;
+  my $cell_left      = $self->cell_left;
   my $line_height    = $self->line_height;
   my $title_baseline = $self->title_baseline;
   my $extra_height   = $self->extra_height;
   my $vpos = $self->grid_height - $line_height;
   $functions .= '  ';
-  foreach my $c (@$channels) {
+  foreach my $c (@$resources) {
       push @hlines, $vpos;
       my $ex = ($c->{lines} - 1) * $extra_height;
       $vpos -= $line_height + $ex;
       $c->{vpos} = $vpos;
       $functions .= $ps->pstr($c->{name}) . ($vpos+$title_baseline+$ex/2);
   }
-  $functions .= "\n  " . @$channels . " {$cell_left exch S} repeat\n\n";
+  $functions .= "\n  " . @$resources . " {$cell_left exch S} repeat\n\n";
   push @hlines, $line_height;
 
   $functions .= <<'EOT';
   HeadFont setfont
-  $channel_width %{$grid_height + $heading_baseline} S
+  $title_width %{$grid_height + $heading_baseline} S
 
   P1
   newpath
@@ -717,7 +719,7 @@ END PS INIT
   0 $grid_height lineto
   closepath stroke
 
-  %{$channel_width + $half_width} $hour_width %{$grid_width - $five_min_width}
+  %{$title_width + $half_width} $hour_width %{$grid_width - $five_min_width}
   {dup %{$grid_height-$line_height} $line_height V 0 $line_height V} for
 EOT
 
@@ -726,16 +728,16 @@ EOT
  {H} repeat
 
   P2
-  %{$channel_width + $hour_width} $hour_width %{$grid_width-1}
+  %{$title_width + $hour_width} $hour_width %{$grid_width-1}
   {dup %{$grid_height-$line_height} $line_height V 0 $line_height V} for
-  $channel_width 0 $grid_height V
+  $title_width 0 $grid_height V
 } def
 EOT
 
   $self->_ps_eval(\$functions);
 
   # Append time, because this should not be substituted for any other version:
-  return (sprintf('PostScript_TVGrid_%s_%s', $$, time), $functions, $VERSION);
+  return (sprintf('PostScript_ScheduleGrid_%s_%s', $$, time), $functions, $VERSION);
 } # end _ps_functions
 
 #---------------------------------------------------------------------
@@ -756,20 +758,20 @@ sub _ps_eval
 } # end _ps_eval
 
 #---------------------------------------------------------------------
-# Clean up the list of channel data:
+# Clean up the list of resource data:
 #
 # Missing parameters are set to their default value.
 # Any floating times in the schedule are converted to the grid's time zone.
 # The schedule is sorted by start time.
 
-sub _normalize_channels
+sub _normalize_resources
 {
   my $self = shift;
 
-  my $channels = $self->channels;
-  my $tz       = $self->time_zone;
+  my $resources = $self->resources;
+  my $tz        = $self->time_zone;
 
-  for my $c (@$channels) {
+  for my $c (@$resources) {
     $c->{lines} ||= 1;
     my $schedule = $c->{schedule};
 
@@ -784,15 +786,15 @@ sub _normalize_channels
     @$schedule = sort {
       DateTime->compare_ignore_floating($a->[iStart], $b->[iStart])
     } @$schedule;
-  } # end for $c in @$channels
-} # end _normalize_channels
+  } # end for $c in @$resources
+} # end _normalize_resources
 
 #---------------------------------------------------------------------
 sub run
 {
   my $self = shift;
 
-  $self->_normalize_channels;
+  $self->_normalize_resources;
 
   # Initialise PostScript::File object:
   my $ps = $self->ps;
@@ -811,7 +813,7 @@ END SETUP
     $ps->add_setup($setup);
   }
 
-  my $channels     = $self->channels;
+  my $resources    = $self->resources;
   my $grid_height  = $self->grid_height;
   my $line_height  = $self->line_height;
   my $extra_height = $self->extra_height;
@@ -863,12 +865,12 @@ END SETUP
       $ps->add_to_page("0 $grid_offset translate\n" .
                        "CellFont setfont\n0 setlinecap\n");
 
-      for my $channel (@$channels) {
-        my $two_line = $channel->{lines} - 1; # FIXME
-        $vpos = $channel->{vpos};
+      for my $resource (@$resources) {
+        my $two_line = $resource->{lines} - 1; # FIXME
+        $vpos = $resource->{vpos};
         my $height = $line_height + $two_line*$extra_height;
 
-        my $schedule = $channel->{schedule};
+        my $schedule = $resource->{schedule};
 
         shift @$schedule while @$schedule and $schedule->[0][iEnd] < $start;
 
@@ -891,7 +893,7 @@ END SETUP
             last;
           }
         } # end while @$schedule
-      } # end for @$channels
+      } # end for @$resources
 
       $self->_end_grid_page;
       $self->start_date($start = $end);
@@ -918,16 +920,16 @@ sub _add_vline
 
 #  printf "  %s - %s = %s\n", $self->start_date, $time, $minutes;
 
-  my $channel_width = $self->channel_width;
+  my $title_width = $self->title_width;
 
   my $hash = $self->_vlines->[ $minutes % 60 == 0 ];
   $hash->{$height} = [] unless $hash->{$height};
   my $list = $hash->{$height};
-  my $hpos = ($channel_width + int(($minutes + 3) / 5) * $self->five_min_width);
+  my $hpos = ($title_width + int(($minutes + 3) / 5) * $self->five_min_width);
 
   my $entry = "$hpos $vpos";
   push @$list, $entry
-      unless $hpos == $channel_width or $hpos == $self->grid_width or
+      unless $hpos == $title_width or $hpos == $self->grid_width or
              (@$list and $list->[-1] eq $entry);
   $hpos;
 } # end _add_vline
@@ -1026,7 +1028,7 @@ __END__
 =head1 SYNOPSIS
 
   use DateTime;
-  use PostScript::TVGrid;
+  use PostScript::ScheduleGrid;
 
   sub dt # Trivial parser to create DateTime objects
   {
@@ -1036,10 +1038,10 @@ __END__
     DateTime->new(\%dt);
   } # end dt
 
-  my $grid = PostScript::TVGrid->new(
+  my $grid = PostScript::ScheduleGrid->new(
     start_date => dt('2011-10-02 18'),
     end_date   => dt('2011-10-02 22'),
-    channels => [
+    resources => [
       { name => '2 FOO',
         schedule => [
           [ dt('2011-10-02 18'), dt('2011-10-02 19'), 'Some hour-long show' ],
@@ -1048,13 +1050,13 @@ __END__
           [ dt('2011-10-02 21'), dt('2011-10-02 22'), 'Show order insignificant' ],
           [ dt('2011-10-02 20:30'), dt('2011-10-02 21'), 'Second half-hour' ],
         ],
-      }, # end channel 2 FOO
+      }, # end resource 2 FOO
       { name => '1 Channel',
         schedule => [
           [ dt('2011-10-02 18'), dt('2011-10-02 22'),
-            'Unlike programs, the order of channels is significant.' ],
+            'Unlike events, the order of resources is significant.' ],
         ],
-      }, # end channel 1 Channel
+      }, # end resource 1 Channel
     ],
   );
 
@@ -1063,8 +1065,8 @@ __END__
 
 =head1 DESCRIPTION
 
-PostScript::TVGrid generates TV listings in a grid format.  It can
-also be used to generate other types of schedules.
+PostScript::ScheduleGrid generates a printable schedule in a grid
+format commonly used for TV listings.
 
 =begin Pod::Loom-group_attr data
 

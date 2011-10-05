@@ -4,7 +4,7 @@
 use Test::More tests => 1;
 
 BEGIN {
-    use_ok('PostScript::TVGrid');
+    use_ok('PostScript::ScheduleGrid');
 }
 
-diag("Testing PostScript::TVGrid $PostScript::TVGrid::VERSION");
+diag("Testing PostScript::ScheduleGrid $PostScript::ScheduleGrid::VERSION");

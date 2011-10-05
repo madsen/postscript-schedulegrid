@@ -7,8 +7,8 @@ Makefile
 /META.yml
 /MYMETA.yml
 /pm_to_blib
-PostScript-TVGrid-*.tar.gz
-PostScript-TVGrid-*/
+PostScript-ScheduleGrid-*.tar.gz
+PostScript-ScheduleGrid-*/
 /test-results/
 *.c
 *.obj

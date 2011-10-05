@@ -1,5 +1,5 @@
 #---------------------------------------------------------------------
-package PostScript::TVGrid::Types;
+package PostScript::ScheduleGrid::Types;
 #
 # Copyright 2010 Christopher J. Madsen
 #
@@ -14,7 +14,7 @@ package PostScript::TVGrid::Types;
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See either the
 # GNU General Public License or the Artistic License for more details.
 #
-# ABSTRACT: type library for PostScript::TVGrid
+# ABSTRACT: type library for PostScript::ScheduleGrid
 #---------------------------------------------------------------------
 
 our $VERSION = '0.01';
@@ -78,7 +78,7 @@ __END__
 
 =head1 DESCRIPTION
 
-These are the custom types used by L<PostScript::TVGrid>.
+These are the custom types used by L<PostScript::ScheduleGrid>.
 
 =head1 TYPES
 

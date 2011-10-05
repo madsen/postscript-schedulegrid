@@ -1,4 +1,4 @@
-PostScript::TVGrid version {{$version}}, released {{$date}}
+PostScript::ScheduleGrid version {{$version}}, released {{$date}}
 
 
 This module creates a grid of TV listings (using PostScript) from
@@ -22,7 +22,7 @@ DEPENDENCIES
 
 
 CHANGES
-    Here's what's new in version {{$version}} of PostScript::TVGrid:
+    Here's what's new in version {{$version}} of PostScript::ScheduleGrid:
     (See the file "Changes" for the full revision history.)
 
 {{$changes}}
