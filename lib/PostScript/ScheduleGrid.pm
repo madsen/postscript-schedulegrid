@@ -36,8 +36,8 @@ use namespace::autoclean -also => qr/^i[[:upper:]]/;
 
 sub iStart () { 0 }
 sub iEnd   () { 1 }
-sub iShow  () { 2 }
-sub iMark  () { 3 }
+sub iName  () { 2 }
+sub iCat   () { 3 }
 
 #=====================================================================
 
@@ -779,7 +779,7 @@ sub _ps_eval
 # Any floating times in the schedule are converted to the grid's time zone.
 # The schedule is sorted by start time.
 
-our %validMark = map { $_ => 1 } qw( G GL GR ), '';
+our %validCat = map { $_ => 1 } qw( G GL GR ), '';
 
 sub _normalize_resources
 {
@@ -795,8 +795,8 @@ sub _normalize_resources
     # Convert any floating times to specified time zone:
     for my $rec (@$schedule) {
       croak sprintf("Invalid category '%s' in %s event at %s",
-                    $rec->[iMark], $c->{name}, $rec->[iStart])
-          unless $validMark{$rec->[iMark] // ''};
+                    $rec->[iCat], $c->{name}, $rec->[iStart])
+          unless $validCat{$rec->[iCat] // ''};
       for my $date (@$rec[iStart, iEnd]) {
         $date->set_time_zone($tz) if $date->time_zone->is_floating;
       }
@@ -911,11 +911,11 @@ END SETUP
           my $right = $self->_add_vline(min($s->[iEnd], $end), $height,$vpos);
           $ps->add_to_page(sprintf "%s %s %s %s C\n%s",
                            $height, $right - $left, $left, $vpos,
-                           defined $s->[iMark] ? "$s->[iMark]\n" : '');
+                           defined $s->[iCat] ? "$s->[iCat]\n" : '');
           if ($two_line) {
-            $self->_two_line_box($left,$right,$vpos,$s->[iShow]);
+            $self->_two_line_box($left,$right,$vpos,$s->[iName]);
           } else {
-            $self->_one_line_box($left,$right,$vpos,$s->[iShow]);
+            $self->_one_line_box($left,$right,$vpos,$s->[iName]);
           }
           $ps->add_to_page("R\n");
           if ($s->[iEnd] > $end) {
