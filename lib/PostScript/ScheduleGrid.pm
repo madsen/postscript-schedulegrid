@@ -564,9 +564,10 @@ sub _ps_functions
   0 setgray
 } def
 
-/round18 % round down to a multiple of 18
-{
-  18 div  truncate  18 mul
+/rnDn % round X down to a multiple of N
+{				% X N
+  exch	1 index			% N X N
+  div  truncate  mul
 } bind def
 
 /prepSlantFill % common prep for GL & GR
@@ -576,9 +577,9 @@ sub _ps_functions
   2 setlinecap
   clippath pathbbox newpath     % (LLX LLY URX URY)
   4 2 roll                      % (URX URY LLX LLY)
-  round18                       % (URX URY LLX LLY1)
+  18 rnDn                       % (URX URY LLX LLY1)
   4 1 roll                      % (LLY1 URX URY LLX)
-  round18                       % (LLY1 URX URY LLX1)
+  18 rnDn                       % (LLY1 URX URY LLX1)
   4 1 roll                      % (LLX1 LLY1 URX URY)
   2 index                       % (LLX Bot URX URY LLY)
   sub                           % (LLX Bot URX Height)
