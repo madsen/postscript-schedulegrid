@@ -639,6 +639,8 @@ the default style, you must assign every cell a category.
       push @$styles, $class->new(@args, name => $name);
     } # end while my ($cat, $def)
   } # end if categories
+
+  $self->_run;
 } # end BUILD
 
 #---------------------------------------------------------------------
@@ -866,7 +868,7 @@ category that doesn't exist.
 } # end _normalize_resources
 
 #---------------------------------------------------------------------
-sub run
+sub _run
 {
   my $self = shift;
 
@@ -981,9 +983,7 @@ END SETUP
       last PAGE unless $start < $stop_date;
     } # end foreach grid
   } # end PAGE loop
-
-  $self->output(@_) if @_;
-} # end run
+} # end _run
 
 has _vlines => (
   is       => 'ro',
@@ -1147,7 +1147,6 @@ __END__
     ],
   );
 
-  $grid->run;
   $grid->output('/tmp/testgrid.ps');
 
 =head1 DESCRIPTION
