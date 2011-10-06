@@ -6,6 +6,9 @@ META.yml
 Makefile.PL
 README
 lib/PostScript/ScheduleGrid.pm
+lib/PostScript/ScheduleGrid/Role/Style.pm
+lib/PostScript/ScheduleGrid/Style/Solid.pm
+lib/PostScript/ScheduleGrid/Style/Stripe.pm
 lib/PostScript/ScheduleGrid/Types.pm
 t/00.load.t
 t/release-pod-coverage.t

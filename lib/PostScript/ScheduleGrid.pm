@@ -28,9 +28,10 @@ use MooseX::Types::DateTime (); # Just load coercions
 use PostScript::ScheduleGrid::Types ':all';
 
 use Carp qw(croak);
+use Class::MOP ();              # for load_class
 use List::Util qw(max min);
 use POSIX qw(floor);
-use PostScript::File 2.10;      # Need improved API
+use PostScript::File 2.10 qw(str); # Need improved API
 
 use namespace::autoclean -also => qr/^i[[:upper:]]/;
 
@@ -263,9 +264,8 @@ represented by a 4-element arrayref: S<C<[START, STOP, NAME, CATEGORY]>>.
 C<START> and C<STOP> are the start and stop times (as DateTime
 objects).  C<NAME> is the name of the event as it should appear in
 the grid.  The optional C<CATEGORY> causes the event to be displayed
-specially.  It may be set to C<G> for a solid gray background, C<GL>
-for a striped gray background slanting to the left, or C<GR> for a
-striped gray background slanting to the right.
+specially.  If present, it must be one of the keys in the
+C<categories> attribute.
 
 The arrayref will be modified during the grid processing.  Events
 may be listed in any order; the arrayref will be sorted automatically.
@@ -310,6 +310,27 @@ has grid_width => (
     $s->title_width + $s->five_min_width * 12 * $s->grid_hours
   },
 );
+
+=attr-fmt categories
+
+This is not a normal attribute; you may supply a value to the
+constructor, but it cannot be accessed afterwards.  It is a hashref
+keyed by category name.  Category names are arbitrary strings.  Each
+event may be assigned to one category.
+
+The value associated with the category name defines the style that
+will be applied to events in this category. It is either a string (a
+class name), or an arrayref of class name and parameters:
+S<C<[ CLASS, KEY1, VALUE1, KEY2, VALUE2, ... ]>>.
+
+The class name is prefixed with C<PostScript::ScheduleGrid::Style::>
+unless it begins with C<=> (which is removed).  The class must do the
+L<Style|PostScript::ScheduleGrid::Role::Style> role.
+
+The standard styles are
+L<Solid|PostScript::ScheduleGrid::Style::Solid> (for a solid
+background) and L<Stripe|PostScript::ScheduleGrid::Style::Stripe> (for
+a diagonally striped background).
 
 =attr-fmt cell_bot
 
@@ -540,6 +561,20 @@ sub _build_ps
   );
 } # end _build_ps
 
+has _category => (
+  is         => 'ro',
+  isa        => HashRef,
+  init_arg   => undef,
+  default    => sub { { '' => '' } },
+);
+
+has _styles => (
+  is         => 'ro',
+  isa        => ArrayRef[Style],
+  init_arg   => undef,
+  default    => sub { [] },
+);
+
 #---------------------------------------------------------------------
 sub _compute_title_width
 {
@@ -563,6 +598,50 @@ sub _compute_five_min_width
 } # end _compute_five_min_width
 
 #---------------------------------------------------------------------
+sub BUILD
+{
+  my ($self, $args) = @_;
+
+  if (my $cats = $args->{categories}) {
+    my $category = $self->_category;
+    my $styles   = $self->_styles;
+    my $id = 'A';
+
+    while (my ($cat, $def) = each %$cats) {
+      confess 'Category name cannot be empty' unless length $cat;
+
+=diag C<< Category name cannot be empty >>
+
+You cannot define the empty string as a category.  Instead of changing
+the default style, you must assign every cell a category.
+
+=cut
+
+      my $name = 'S' . $id++;
+      $category->{$cat} = $name;
+
+      my ($class, @args);
+
+      if (not ref $def) {
+        $class = $def;
+      } else {
+        ($class, @args) = @$def;
+      }
+
+      $class = "PostScript::ScheduleGrid::Style::$class"
+          unless $class =~ s/^=//;
+
+      Class::MOP::load_class($class);
+
+      croak("$class does not do PostScript::ScheduleGrid::Role::Style")
+          unless $class->DOES('PostScript::ScheduleGrid::Role::Style');
+
+      push @$styles, $class->new(@args, name => $name);
+    } # end while my ($cat, $def)
+  } # end if categories
+} # end BUILD
+
+#---------------------------------------------------------------------
 sub _ps_functions
 {
   my $self = shift;
@@ -581,63 +660,6 @@ sub _ps_functions
 } def
 
 /R {grestore} def
-
-/G
-{
-  0.85 setgray
-  clippath fill
-  0 setgray
-} def
-
-/rnDn % round X down to a multiple of N
-{				% X N
-  exch	1 index			% N X N
-  div  truncate  mul
-} bind def
-
-/prepSlantFill % common prep for GL & GR
-{
-  0.85 setgray
-  6 setlinewidth
-  2 setlinecap
-  clippath pathbbox newpath     % (LLX LLY URX URY)
-  4 2 roll                      % (URX URY LLX LLY)
-  18 rnDn                       % (URX URY LLX LLY1)
-  4 1 roll                      % (LLY1 URX URY LLX)
-  18 rnDn                       % (LLY1 URX URY LLX1)
-  4 1 roll                      % (LLX1 LLY1 URX URY)
-  2 index                       % (LLX Bot URX URY LLY)
-  sub                           % (LLX Bot URX Height)
-} def
-
-/GL % Fill clippath with grey bars slanting to the left
-{
-  prepSlantFill                 % (LLX Bot URX Height)
-  neg dup neg 3 -1 roll add     % (Left Bot -Height Right)
-  4 -1 roll                     % (Bot -Height Right Left)
-  18   3 -1 roll                % (Bot Height Left 18 Right)
-  % stack in FOR: (Bot Height X)
-  {
-    2 index moveto              % (Bot Height)
-    dup dup neg rlineto stroke
-  } for
-  pop pop
-  0 setgray
-} def
-
-/GR % Fill clippath with grey bars slanting to the right
-{
-  prepSlantFill                 % (LLX Bot URX Height)
-  dup neg 5 -1 roll add         % (Bot URX Height Left)
-  18   4 -1 roll                % (Bot Height Left 18 Right)
-  % stack in FOR: (Bot Height X)
-  {
-    2 index moveto              % (Bot Height)
-    dup dup rlineto stroke
-  } for
-  pop pop
-  0 setgray
-} def
 
 /H                             % YPOS H
 {
@@ -775,6 +797,10 @@ EOT
 
   $self->_ps_eval(\$functions);
 
+  foreach my $style (@{ $self->_styles }) {
+    $functions .= $style->define_style($self);
+  }
+
   # Append time, because this should not be substituted for any other version:
   return (sprintf('PostScript_ScheduleGrid_%s_%s', $$, time), $functions, $VERSION);
 } # end _ps_functions
@@ -791,7 +817,7 @@ sub _ps_eval
   my $self = shift;
 
   foreach my $psRef (@_) {
-    $$psRef =~ s/\$([a-z0-9_]+)/ $self->$1 /ieg;
+    $$psRef =~ s/\$([a-z0-9_]+)/ str($self->$1) /ieg;
     $$psRef =~ s[%\{([^\}]+)\}][$1]eeg;
   }
 } # end _ps_eval
@@ -803,14 +829,13 @@ sub _ps_eval
 # Any floating times in the schedule are converted to the grid's time zone.
 # The schedule is sorted by start time.
 
-our %validCat = map { $_ => 1 } qw( G GL GR ), '';
-
 sub _normalize_resources
 {
   my $self = shift;
 
   my $resources = $self->resources;
   my $tz        = $self->time_zone;
+  my $cat       = $self->_category;
 
   for my $c (@$resources) {
     $c->{lines} ||= 1;
@@ -820,7 +845,7 @@ sub _normalize_resources
     for my $rec (@$schedule) {
       croak sprintf("Invalid category '%s' in %s event at %s",
                     $rec->[iCat], $c->{name}, $rec->[iStart])
-          unless $validCat{$rec->[iCat] // ''};
+          unless exists $cat->{$rec->[iCat] // ''};
       for my $date (@$rec[iStart, iEnd]) {
         $date->set_time_zone($tz) if $date->time_zone->is_floating;
       }
@@ -867,6 +892,7 @@ END SETUP
     $ps->add_setup($setup);
   }
 
+  my $cat          = $self->_category;
   my $resources    = $self->resources;
   my $grid_height  = $self->grid_height;
   my $line_height  = $self->line_height;
@@ -935,7 +961,7 @@ END SETUP
           my $right = $self->_add_vline(min($s->[iEnd], $end), $height,$vpos);
           $ps->add_to_page(sprintf "%s %s %s %s C\n%s",
                            $height, $right - $left, $left, $vpos,
-                           defined $s->[iCat] ? "$s->[iCat]\n" : '');
+                           defined $s->[iCat] ? "$cat->{$s->[iCat]}\n" : '');
           if ($two_line) {
             $self->_two_line_box($left,$right,$vpos,$s->[iName]);
           } else {
@@ -1097,10 +1123,15 @@ __END__
   my $grid = PostScript::ScheduleGrid->new(
     start_date => dt('2011-10-02 18'),
     end_date   => dt('2011-10-02 22'),
+    categories => {
+      G  => 'Solid',
+      GR => [qw( Stripe direction right )],
+    },
+    resource_title => 'Channel',
     resources => [
       { name => '2 FOO',
         schedule => [
-          [ dt('2011-10-02 18'), dt('2011-10-02 19'), 'Some hour-long show' ],
+          [ dt('2011-10-02 18'), dt('2011-10-02 19'), 'Some hour-long show', 'G' ],
           [ dt('2011-10-02 19'), dt('2011-10-02 20'), 'Another hour-long show' ],
           [ dt('2011-10-02 20'), dt('2011-10-02 20:30'), 'Half-hour show', 'GR' ],
           [ dt('2011-10-02 21'), dt('2011-10-02 22'), 'Show order insignificant' ],

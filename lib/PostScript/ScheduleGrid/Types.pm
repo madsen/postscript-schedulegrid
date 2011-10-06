@@ -21,7 +21,8 @@ our $VERSION = '0.01';
 # This file is part of {{$dist}} {{$dist_version}} ({{$date}})
 
 use MooseX::Types -declare => [qw(
-  BWColor Color Dimension FontMetrics RGBColor RGBColorHex TimeHeaders
+  BWColor Color Dimension FontMetrics RGBColor RGBColorHex Style
+  TimeHeaders
 )];
 use MooseX::Types::Moose qw(ArrayRef Num Str);
 
@@ -29,6 +30,9 @@ use POSIX qw(floor modf);
 
 subtype FontMetrics,
   as class_type('PostScript::File::Metrics');
+
+subtype Style,
+  as role_type('PostScript::ScheduleGrid::Role::Style');
 
 #---------------------------------------------------------------------
 subtype Dimension,
