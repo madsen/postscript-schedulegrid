@@ -27,7 +27,6 @@ use MooseX::Types::Moose qw(ArrayRef Bool HashRef Int Num Str);
 use MooseX::Types::DateTime (); # Just load coercions
 use PostScript::ScheduleGrid::Types ':all';
 
-use Carp qw(croak);
 use Class::MOP ();              # for load_class
 use List::Util qw(max min);
 use POSIX qw(floor);
@@ -638,8 +637,15 @@ the default style, you must assign every cell a category.
 
       Class::MOP::load_class($class);
 
-      croak("$class does not do PostScript::ScheduleGrid::Role::Style")
+      confess("$class does not do PostScript::ScheduleGrid::Role::Style")
           unless $class->DOES('PostScript::ScheduleGrid::Role::Style');
+
+=diag C<< %s does not do PostScript::ScheduleGrid::Role::Style >>
+
+A class used as a category style must do the correct role.  The
+specified class doesn't.
+
+=cut
 
       push @$styles, $class->new(@args, name => $name);
     } # end while my ($cat, $def)
@@ -850,8 +856,8 @@ sub _normalize_resources
 
     # Convert any floating times to specified time zone:
     for my $rec (@$schedule) {
-      croak sprintf("Invalid category '%s' in %s event at %s",
-                    $rec->[iCat], $c->{name}, $rec->[iStart])
+      confess sprintf("Invalid category '%s' in %s event at %s",
+                      $rec->[iCat], $c->{name}, $rec->[iStart])
           unless exists $cat->{$rec->[iCat] // ''};
       for my $date (@$rec[iStart, iEnd]) {
         $date->set_time_zone($tz) if $date->time_zone->is_floating;
