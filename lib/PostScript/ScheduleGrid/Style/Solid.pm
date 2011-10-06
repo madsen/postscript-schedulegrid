@@ -29,9 +29,6 @@ use PostScript::ScheduleGrid::Types ':all';
 
 use namespace::autoclean;
 
-# Import _ps_eval method from PostScript::ScheduleGrid:
-*_ps_eval = \&PostScript::ScheduleGrid::_ps_eval;
-
 #=====================================================================
 has color => (
   is      => 'ro',

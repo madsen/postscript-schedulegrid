@@ -36,6 +36,9 @@ has name => (
 
 requires 'define_style';
 
+# Import _ps_eval method from PostScript::ScheduleGrid:
+__PACKAGE__->meta->add_method(_ps_eval => \&PostScript::ScheduleGrid::_ps_eval);
+
 #=====================================================================
 # Package Return Value:
 
