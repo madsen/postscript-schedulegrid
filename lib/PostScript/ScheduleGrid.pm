@@ -254,6 +254,7 @@ The resource name as it should appear in the grid.
 =item lines
 
 The number of lines that should be used for event listings (default 1).
+Currenly, this must be either 1 or 2.
 
 =item schedule
 
@@ -851,7 +852,13 @@ sub _normalize_resources
   my $cat       = $self->_category;
 
   for my $c (@$resources) {
+    confess "All resources must have a name" unless defined $c->{name};
+
     $c->{lines} ||= 1;
+    confess sprintf("%s is not a supported value for 'lines' in resource %s",
+                    $c->{lines}, $c->{name})
+        unless $c->{lines} ~~ [1,2];
+
     my $schedule = $c->{schedule};
 
     # Convert any floating times to specified time zone:
@@ -864,19 +871,28 @@ sub _normalize_resources
       }
     } # end for $rec in @$schedule
 
-=diag C<< Invalid category '%s' in %s event at %s >>
-
-The event associated with the specified resource and start time had a
-category that doesn't exist.
-
-=cut
-
     # Make sure the schedule is sorted:
     @$schedule = sort {
       DateTime->compare_ignore_floating($a->[iStart], $b->[iStart])
     } @$schedule;
   } # end for $c in @$resources
 } # end _normalize_resources
+
+=diag C<< All resources must have a name >>
+
+One of the hashrefs in C<resources> did not have a C<name> key.
+
+=diag C<< %s is not a supported value for 'lines' in resource %s >>
+
+Currenly, events can only be displayed on 1 or 2 lines.  The specified
+resource tried to use a different value.
+
+=diag C<< Invalid category '%s' in %s event at %s >>
+
+The event associated with the specified resource and start time had a
+category that doesn't exist.
+
+=cut
 
 #---------------------------------------------------------------------
 sub _run
