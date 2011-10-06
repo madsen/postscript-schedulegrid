@@ -397,22 +397,27 @@ converted to this time zone.  Defaults to your local time zone.
 =cut
 
 has start_date => (
-  is       => 'rw',
+  is       => 'ro',
   isa      => 'DateTime',
   required => 1,
 );
 
 has end_date => (
-  is       => 'rw',
+  is       => 'ro',
   isa      => 'DateTime',
   required => 1,
 );
 
 has time_zone => (
-  is       => 'rw',
+  is       => 'ro',
   isa      => 'DateTime::TimeZone',
   coerce   => 1,
   default  => 'local',
+);
+
+has _cur_date => (
+  is       => 'rw',
+  isa      => 'DateTime',
 );
 
 =attr-fmt title_baseline
@@ -910,6 +915,8 @@ END SETUP
     $stop_date->set_time_zone($tz);
   }
 
+  $self->_cur_date( $start );
+
   # Decide if we have room for multiple grids on a page:
   my @grid_offsets;
   {
@@ -978,7 +985,7 @@ END SETUP
       } # end for @$resources
 
       $self->_end_grid_page;
-      $self->start_date($start = $end);
+      $self->_cur_date($start = $end);
 
       last PAGE unless $start < $stop_date;
     } # end foreach grid
@@ -996,9 +1003,9 @@ sub _add_vline
 {
   my ($self,$time,$height,$vpos) = @_;
 
-  my $minutes = $time->subtract_datetime($self->start_date)->in_units('minutes');
+  my $minutes = $time->subtract_datetime($self->_cur_date)->in_units('minutes');
 
-#  printf "  %s - %s = %s\n", $self->start_date, $time, $minutes;
+#  printf "  %s - %s = %s\n", $self->_cur_date, $time, $minutes;
 
   my $title_width = $self->title_width;
 
@@ -1019,7 +1026,7 @@ sub _end_grid_page
   my $self = shift;
 
   my $vpos = $self->grid_height - $self->line_height;
-  my $time = $self->start_date->clone;
+  my $time = $self->_cur_date->clone;
   my $ps   = $self->ps;
   my $headers = $self->time_headers;
 
