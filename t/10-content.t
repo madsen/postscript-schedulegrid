@@ -59,7 +59,7 @@ if (@ARGV and $ARGV[0] eq 'gen') {
 while (<DATA>) {
   print OUT $_ if $generateResults;
 
-  next unless /\S/;
+  next if /^#[^#]/ or not /\S/;
 
   /^##\s*(.+)/ or die "Expected test name, got $_";
   my $name = $1;
@@ -545,3 +545,7 @@ pagelevel restore
 showpage
 %%EOF
 ---END---
+
+# Local Variables:
+# compile-command: "perl 10-content.t gen"
+# End:

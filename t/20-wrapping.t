@@ -230,3 +230,7 @@ if ($generateResults) {
 } else {
   done_testing;
 }
+
+# Local Variables:
+# compile-command: "perl 20-wrapping.t gen"
+# End:
