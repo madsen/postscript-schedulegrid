@@ -72,8 +72,7 @@ has _metrics => (
   lazy     => 1,
   default  => sub {
     my $s = shift;
-    $s->ps->get_metrics($s->cell_font . '-iso', $s->cell_font_size)
-      ->set_wrap_chars(".,:?)]-/\xAD\x{2013}\x{2014}");
+    $s->ps->get_metrics($s->cell_font . '-iso', $s->cell_font_size);
   },
 );
 
@@ -1089,15 +1088,21 @@ sub _add_cell_text
 
     my $metrics = $self->_metrics;
 
+    my @chars;
+
   BREAKDOWN: {
+      my @warnings;
       my @lines = $metrics->wrap($width, $show,
-                                 { maxlines => $lines, quiet => 1 });
+                                 { maxlines => $lines, quiet => 1,
+                                   warnings => \@warnings, @chars });
 
-      redo BREAKDOWN
-          if $metrics->width($lines[-1]) > $width
-               and $show =~ s/^(?:The|New|A|(?:Real )?Adventures of) +//i;
+      redo BREAKDOWN if @warnings
+          and $show =~ s/^(?:The|New|An?|(?:Real )?Adventures of) +//i;
 
-      $lines[-1] =~ s/[ \t]*\n.*//s;
+      if (($lines[-1] =~ s/[ \t]*\n.*//s or @warnings) and not @chars) {
+        @chars = (chars => ".,:?)]-/\xAD\x{2013}\x{2014}");
+        redo BREAKDOWN;   # Try again with more permissive line breaks
+      }
 
       my $ps = $self->ps;
       my $code = '';
