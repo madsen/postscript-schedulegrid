@@ -30,7 +30,7 @@ use PostScript::ScheduleGrid::Types ':all';
 use Class::MOP ();              # for load_class
 use List::Util qw(max min);
 use POSIX qw(floor);
-use PostScript::File 2.10 qw(str); # Need improved API
+use PostScript::File 2.11 qw(str); # Need improved word wrapping
 
 use namespace::autoclean -also => qr/^i[[:upper:]]/;
 
@@ -72,7 +72,8 @@ has _metrics => (
   lazy     => 1,
   default  => sub {
     my $s = shift;
-    $s->ps->get_metrics($s->cell_font . '-iso', $s->cell_font_size);
+    $s->ps->get_metrics($s->cell_font . '-iso', $s->cell_font_size)
+      ->set_wrap_chars(".,:?)]-/\xAD\x{2013}\x{2014}");
   },
 );
 
@@ -254,7 +255,6 @@ The resource name as it should appear in the grid.
 =item lines
 
 The number of lines that should be used for event listings (default 1).
-Currenly, this must be either 1 or 2.
 
 =item schedule
 
@@ -857,7 +857,7 @@ sub _normalize_resources
     $c->{lines} ||= 1;
     confess sprintf("%s is not a supported value for 'lines' in resource %s",
                     $c->{lines}, $c->{name})
-        unless $c->{lines} ~~ [1,2];
+        unless $c->{lines} == int($c->{lines}) and $c->{lines} > 0;
 
     my $schedule = $c->{schedule};
 
@@ -884,7 +884,7 @@ One of the hashrefs in C<resources> did not have a C<name> key.
 
 =diag C<< %s is not a supported value for 'lines' in resource %s >>
 
-Currenly, events can only be displayed on 1 or 2 lines.  The specified
+The number of lines must be a positive integer.  The specified
 resource tried to use a different value.
 
 =diag C<< Invalid category '%s' in %s event at %s >>
@@ -977,9 +977,9 @@ END SETUP
                        "CellFont setfont\n0 setlinecap\n");
 
       for my $resource (@$resources) {
-        my $two_line = $resource->{lines} - 1; # FIXME
+        my $lines = $resource->{lines};
         $vpos = $resource->{vpos};
-        my $height = $line_height + $two_line*$extra_height;
+        my $height = $line_height + ($lines-1) * $extra_height;
 
         my $schedule = $resource->{schedule};
 
@@ -993,11 +993,7 @@ END SETUP
           $ps->add_to_page(sprintf "%s %s %s %s C\n%s",
                            $height, $right - $left, $left, $vpos,
                            defined $s->[iCat] ? "$cat->{$s->[iCat]}\n" : '');
-          if ($two_line) {
-            $self->_two_line_box($left,$right,$vpos,$s->[iName]);
-          } else {
-            $self->_one_line_box($left,$right,$vpos,$s->[iName]);
-          }
+          $self->_add_cell_text($left,$right,$vpos,$lines,$s->[iName]);
           $ps->add_to_page("R\n");
           if ($s->[iEnd] > $end) {
             unshift @$schedule, $s;
@@ -1081,51 +1077,39 @@ sub _print_vlines
 } # end _print_vlines
 
 #---------------------------------------------------------------------
-sub _one_line_box
+sub _add_cell_text
 {
-    my ($self, $left, $right, $vpos, $show) = @_;
+    my ($self, $left, $right, $vpos, $lines, $show) = @_;
 
-    my $width = $right - $left - $self->cell_left;
-    my $sw = $self->_metrics->width($show);
-    $show =~ s/^The +// if $sw > $width;
+    my $extra_height = $self->extra_height;
 
-    $self->ps->add_to_page(sprintf("%s %s %s S\n",
-                                   $self->ps->pstr($show),
-                                   $left + $self->cell_left,
-                                   $vpos + $self->cell_bot));
-} # end _one_line_box
-
-#---------------------------------------------------------------------
-sub _two_line_box
-{
-    my ($self, $left, $right, $vpos, $show) = @_;
     $left += $self->cell_left;
-    $vpos += $self->cell_bot;
+    $vpos += $self->cell_bot + $extra_height * ($lines-1);
     my $width = $right - $left;
 
     my $metrics = $self->_metrics;
 
   BREAKDOWN: {
-        my ($line1,$line2) = ($show,'');
+      my @lines = $metrics->wrap($width, $show,
+                                 { maxlines => $lines, quiet => 1 });
 
-        while ($metrics->width($line1) > $width
-              and $line1 =~ m![- /]!) {
-            $line1 =~ s!\s*([^- /]*.)\Z!!;
-            $line2 = "$1 $line2";
-        }
-        $line2 =~ s!([-/])\s+!$1!g;
-        $line2 =~ s/\s+$//;
-        redo BREAKDOWN
-            if $metrics->width($line2) > $width
+      redo BREAKDOWN
+          if $metrics->width($lines[-1]) > $width
                and $show =~ s/^(?:The|New|A|(?:Real )?Adventures of) +//i;
 
-        my $ps = $self->ps;
-        my $code = sprintf("%s %s %s S\n", $ps->pstr($line1),
-                           $left, $vpos + $self->extra_height);
-        $code .= $ps->pstr($line2) . " $left $vpos S\n" if length $line2;
-        $ps->add_to_page($code);
+      $lines[-1] =~ s/[ \t]*\n.*//s;
+
+      my $ps = $self->ps;
+      my $code = '';
+
+      for my $line (@lines) {
+        $code .= sprintf("%s %s %s S\n", $ps->pstr($line),
+                         $left, $vpos) if length $line;
+        $vpos -= $extra_height;
+      }
+      $ps->add_to_page($code);
     } # end BREAKDOWN
-} # end _two_line_box
+} # end _add_cell_text
 
 #=====================================================================
 # Package Return Value:

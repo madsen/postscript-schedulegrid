@@ -108,8 +108,8 @@ use PostScript::ScheduleGrid ();
     default => 72,
   );
 
-  __PACKAGE__->meta->add_method(_two_line_box =>
-                                \&PostScript::ScheduleGrid::_two_line_box);
+  __PACKAGE__->meta->add_method(_add_cell_text =>
+                                \&PostScript::ScheduleGrid::_add_cell_text);
   __PACKAGE__->meta->make_immutable;
 } # end Mock::Grid
 
@@ -207,7 +207,7 @@ my $cp1252 = find_encoding('cp1252') or die "cp1252 missing";
 for my $test (@tests) {
   my $grid = Mock::Grid->new($test->[iParam]);
 
-  $grid->_two_line_box(100, 100 + $grid->width, 500, $test->[iText]);
+  $grid->_add_cell_text(100, 100 + $grid->width, 500, 2, $test->[iText]);
 
   my $got = $cp1252->decode( $grid->ps->get_page );
 
