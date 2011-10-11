@@ -44,7 +44,7 @@ use PostScript::ScheduleGrid ();
 
   use Moose;
 
-  use MooseX::Types::Moose qw(Str);
+  use MooseX::Types::Moose qw(Int Str);
   use PostScript::ScheduleGrid::Types ':all';
 
   has cell_font => (
@@ -99,6 +99,12 @@ use PostScript::ScheduleGrid ();
     default => sub {
       PostScript::File->new(reencode => 'cp1252');
     },
+  );
+
+  has lines => (
+    is      => 'ro',
+    isa     => Int,
+    default => 2,
   );
 
   has width => (
@@ -190,6 +196,35 @@ my @tests = (
     "Short text",
     "(Short text) 101 514 S\n"
   ],
+  [
+    "no spaces",
+    {},
+    "This.line.will.have.to.be.wrapped.at.periods.",
+    "(This.line.will.have.to.) 101 509 S\n(be.wrapped.at.periods.) 101 502 S\n"
+  ],
+  [
+    "some spaces",
+    {},
+    "This line will.have.to.be.wrapped at periods.",
+    "(This line will.have.to.) 101 509 S\n(be.wrapped at periods.) 101 502 S\n"
+  ],
+  [
+    "some spaces on 3 lines",
+    {
+      lines => 3,
+      width => 100
+    },
+    "This line will.not.have.to.be.wrapped at periods.",
+    "(This line) 101 516 S\n(will.not.have.to.be.wrapped at) 101 509 S\n(periods.) 101 502 S\n"
+  ],
+  [
+    "one line only",
+    {
+      lines => 1
+    },
+    "This line can not be wrapped even though it's long.",
+    "(This line can not be wrapped even though it's long.) 101 502 S\n"
+  ],
 ); # end @tests
 
 #---------------------------------------------------------------------
@@ -207,7 +242,8 @@ my $cp1252 = find_encoding('cp1252') or die "cp1252 missing";
 for my $test (@tests) {
   my $grid = Mock::Grid->new($test->[iParam]);
 
-  $grid->_add_cell_text(100, 100 + $grid->width, 500, 2, $test->[iText]);
+  $grid->_add_cell_text(100, 100 + $grid->width, 500, $grid->lines,
+                        $test->[iText]);
 
   my $got = $cp1252->decode( $grid->ps->get_page );
 
