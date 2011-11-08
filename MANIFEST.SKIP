@@ -6,6 +6,7 @@
 \.o$
 \.obj$
 \.pdb$
+\.ps$
 \.tmp$
 ^\#
 ^MANIFEST\.
