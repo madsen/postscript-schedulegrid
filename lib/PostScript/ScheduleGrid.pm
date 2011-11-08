@@ -271,7 +271,7 @@ may be listed in any order; the arrayref will be sorted automatically.
 
 =back
 
-All other keys are reserved.  Keys matching C</^x[[:upper:]]/> are
+All other keys are reserved.  Any key beginning with an uppercase letter is
 reserved for use by programs using PostScript::ScheduleGrid (and will be
 ignored by this module).
 
@@ -1170,7 +1170,11 @@ __END__
 =head1 DESCRIPTION
 
 PostScript::ScheduleGrid generates a printable schedule in a grid
-format commonly used for TV listings.
+format commonly used for TV listings.  (If you are considering using
+it for actual TV listings, you should look at
+L<PostScript::ScheduleGrid::XMLTV>, which creates a
+PostScript::ScheduleGrid from TV listings data gathered by
+L<XMLTV>. L<http://xmltv.org>)
 
 =begin Pod::Loom-group_attr data
 
@@ -1192,3 +1196,7 @@ formatting of the grid.  All dimensions are in points.
 You will probably not need to use these attributes unless you are
 trying advanced tasks.
 
+=head1 SEE ALSO
+
+L<PostScript::ScheduleGrid::XMLTV>, for creating a grid with TV listings
+from L<XMLTV>.
