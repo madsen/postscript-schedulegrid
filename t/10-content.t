@@ -22,6 +22,7 @@ use warnings;
 
 use Test::More 0.88;            # want done_testing
 
+# SUGGEST PREREQ: Test::Differences 0 (better output for failures)
 # Load Test::Differences, if available:
 BEGIN {
   if (eval "use Test::Differences; 1") {
