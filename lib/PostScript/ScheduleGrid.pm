@@ -1200,3 +1200,6 @@ trying advanced tasks.
 
 L<PostScript::ScheduleGrid::XMLTV>, for creating a grid with TV listings
 from L<XMLTV>.
+
+=for Pod::Coverage
+^BUILD$

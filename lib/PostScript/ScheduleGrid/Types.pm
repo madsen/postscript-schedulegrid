@@ -109,6 +109,10 @@ round-off errors in PostScript calculations.
 
 A L<PostScript::File::Metrics>.
 
+=head2 Style
+
+A class that does L<PostScript::ScheduleGrid::Role::Style>.
+
 =head1 SEE ALSO
 
 L<MooseX::Types>, L<MooseX::Types::Moose>.

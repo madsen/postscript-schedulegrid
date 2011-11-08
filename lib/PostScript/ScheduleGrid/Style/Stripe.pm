@@ -31,6 +31,22 @@ use PostScript::ScheduleGrid::Types ':all';
 use namespace::autoclean;
 
 #=====================================================================
+
+=attr color
+
+The background color for the cell (default light gray 0.85).
+
+=attr direction
+
+The direction of the slant, either C<left> (meaning C<\>) or C<right>
+(meaning C</>).  Default C<left>.
+
+=attr text_color
+
+The color for the cell's text (default black).
+
+=cut
+
 has color => (
   is      => 'ro',
   isa     => Color,
@@ -125,3 +141,11 @@ END EPILOGUE
 1;
 
 __END__
+
+=head1 DESCRIPTION
+
+This L<Style|PostScript::ScheduleGrid::Role::Style> produces a striped
+background.
+
+=for Pod::Coverage
+^define_style$
