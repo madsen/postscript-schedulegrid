@@ -28,6 +28,8 @@ use MooseX::Types::DateTime (); # Just load coercions
 use PostScript::ScheduleGrid::Types ':all';
 
 use Class::MOP ();              # for load_class
+use DateTime ();
+use DateTime::TimeZone ();
 use List::Util qw(max min);
 use POSIX qw(floor);
 use PostScript::File 2.11 qw(str); # Need improved word wrapping
