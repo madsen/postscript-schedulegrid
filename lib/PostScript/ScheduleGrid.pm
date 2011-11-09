@@ -333,6 +333,9 @@ L<Solid|PostScript::ScheduleGrid::Style::Solid> (for a solid
 background) and L<Stripe|PostScript::ScheduleGrid::Style::Stripe> (for
 a diagonally striped background).
 
+Note: If you list the same style class (with the same parameters) more
+than once, only one copy of that style will be created.
+
 =attr-fmt cell_bot
 
 This is the space between the bottom of a cell and the baseline of the
@@ -613,7 +616,9 @@ sub BUILD
     my $styles   = $self->_styles;
     my $id = 'A';
 
-    while (my ($cat, $def) = each %$cats) {
+    my %used;
+
+    foreach my $cat (sort keys %$cats) {
       confess 'Category name cannot be empty' unless length $cat;
 
 =diag C<< Category name cannot be empty >>
@@ -623,9 +628,7 @@ the default style, you must assign every cell a category.
 
 =cut
 
-      my $name = 'S' . $id++;
-      $category->{$cat} = $name;
-
+      my $def = $cats->{$cat};
       my ($class, @args);
 
       if (not ref $def) {
@@ -634,13 +637,22 @@ the default style, you must assign every cell a category.
         ($class, @args) = @$def;
       }
 
-      $class = "PostScript::ScheduleGrid::Style::$class"
-          unless $class =~ s/^=//;
+      my $cacheKey = join("\0", $class, @args);
 
-      Class::MOP::load_class($class);
+      if (defined $used{$cacheKey}) {
+        # We've already defined an equivalent style
+        $category->{$cat} = $used{$cacheKey};
+      } else {
+        my $name = 'S' . $id++;
+        $category->{$cat} = $used{$cacheKey} = $name;
 
-      confess("$class does not do PostScript::ScheduleGrid::Role::Style")
-          unless $class->DOES('PostScript::ScheduleGrid::Role::Style');
+        $class = "PostScript::ScheduleGrid::Style::$class"
+            unless $class =~ s/^=//;
+
+        Class::MOP::load_class($class);
+
+        confess("$class does not do PostScript::ScheduleGrid::Role::Style")
+            unless $class->DOES('PostScript::ScheduleGrid::Role::Style');
 
 =diag C<< %s does not do PostScript::ScheduleGrid::Role::Style >>
 
@@ -649,8 +661,9 @@ specified class doesn't.
 
 =cut
 
-      push @$styles, $class->new(@args, name => $name);
-    } # end while my ($cat, $def)
+        push @$styles, $class->new(@args, name => $name);
+      }
+    } # end foreach $cat in %$cats
   } # end if categories
 
   $self->_run;

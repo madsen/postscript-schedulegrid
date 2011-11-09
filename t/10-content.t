@@ -54,7 +54,7 @@ if (@ARGV and $ARGV[0] eq 'gen') {
   open(OUT, '>', '/tmp/10-content.t') or die $!;
   printf OUT "#%s\n\n__DATA__\n", '=' x 69;
 } else {
-  plan tests => 2 * 2;
+  plan tests => 3 * 2;
 }
 
 while (<DATA>) {
@@ -463,15 +463,8 @@ P2
 } def
 /SA
 {
-0.85 sStripe-P              % (LLX Bot URX Height)
-dup neg 5 -1 roll add         % (Bot URX Height Left)
-18   4 -1 roll                % (Bot Height Left 18 Right)
-% stack in FOR: (Bot Height X)
-{
-2 index moveto              % (Bot Height)
-dup dup rlineto stroke
-} for
-pop pop
+0.85 setColor
+clippath fill
 0 setColor
 } def
 /SB
@@ -490,8 +483,15 @@ pop pop
 } def
 /SC
 {
-0.85 setColor
-clippath fill
+0.85 sStripe-P              % (LLX Bot URX Height)
+dup neg 5 -1 roll add         % (Bot URX Height Left)
+18   4 -1 roll                % (Bot Height Left 18 Right)
+% stack in FOR: (Bot Height X)
+{
+2 index moveto              % (Bot Height)
+dup dup rlineto stroke
+} for
+pop pop
 0 setColor
 } def
 %%EndResource
@@ -513,18 +513,258 @@ userdict begin
 CellFont setfont
 0 setlinecap
 10 130.5 45.8125 20 C
-SC
+SA
 (First show) 47.21875 22.5 S
 R
 10 130.5 176.3125 20 C
 (Second show) 177.71875 22.5 S
 R
 10 65.25 306.8125 20 C
-SA
+SC
 (First 1/2 show) 308.21875 22.5 S
 R
 10 65.25 372.0625 20 C
+SC
+(Second 1/2) 373.46875 22.5 S
+R
+10 130.5 437.3125 20 C
+(Last show) 438.71875 22.5 S
+R
+10 522 45.8125 10 C
+SB
+(Long show.) 47.21875 12.5 S
+R
+(Sunday, October 2, 2011)(6:00 PM)(6:30 PM)(7:00 PM)(7:30 PM)(8:00 PM)(8:30 PM)(9:00 PM)(9:30 PM)prg
+176.3125 20 306.8125 20 437.3125 20
+3 {10 V} repeat
+P1
+372.0625 20
+1 {10 V} repeat
+%%PageTrailer
+end
+pagelevel restore
+showpage
+%%EOF
+---END---
+
+## duplicate categories
+{
+  start_date => dt('2011-10-02 18'),
+  end_date   => dt('2011-10-02 22'),
+  resource_title => 'Channel',
+  time_headers => ['h:mm a', 'h:mm a'],
+  categories => { GR => [qw(Stripe direction right)],
+                  GL => 'Stripe',
+                  G => 'Solid',
+                  repeatAR => [qw(Stripe direction right)],
+                  repeatBL => 'Stripe',
+                  repeatCG => 'Solid' },
+  resources => simple_resources(qw(G . GR . repeatAR GL)),
+}
+<<'---END---';
+%!PS-Adobe-3.0
+%%Orientation: Portrait
+%%DocumentNeededResources:
+%%+ font Courier-Bold Helvetica Helvetica-Bold
+%%DocumentSuppliedResources:
+%%+ procset PostScript_ScheduleGrid_Style_Stripe 0 0
+%%+ procset PostScript_ScheduleGrid 0 0
+%%Title: TV Grid
+%%PageOrder: Ascend
+%%EndComments
+%%BeginProlog
+%%BeginResource: procset PostScript_ScheduleGrid_Style_Stripe 0 0
+/sStripe-R % round X down to a multiple of N
+{				% X N
+exch	1 index			% N X N
+div  truncate  mul
+} bind def
+/sStripe-P % common prep
+{
+setColor
+6 setlinewidth
+2 setlinecap
+clippath pathbbox newpath     % (LLX LLY URX URY)
+4 2 roll                      % (URX URY LLX LLY)
+18 sStripe-R                  % (URX URY LLX LLY1)
+4 1 roll                      % (LLY1 URX URY LLX)
+18 sStripe-R                  % (LLY1 URX URY LLX1)
+4 1 roll                      % (LLX1 LLY1 URX URY)
+2 index                       % (LLX Bot URX URY LLY)
+sub                           % (LLX Bot URX Height)
+} def
+%%EndResource
+%%BeginResource: procset PostScript_ScheduleGrid 0 0
+/pixel {72 mul 300 div} def % 300 dpi only
+/C                             % HEIGHT WIDTH LEFT VPOS C
+{
+gsave
+newpath moveto                % HEIGHT WIDTH
+dup 0 rlineto                 % HEIGHT WIDTH
+0 3 -1 roll rlineto           % WIDTH
+-1 mul 0 rlineto
+closepath clip
+} def
+/R {grestore} def
+/H                             % YPOS H
+{
+newpath
+0 exch moveto
+567.8125 0 rlineto
+stroke
+} def
+/P1 {1 pixel setlinewidth} def
+/P2 {2 pixel setlinewidth} def
+/S                             % STRING X Y S
+{
+newpath moveto show
+} def
+/V                             % XPOS YPOS HEIGHT V
+{
+newpath
+3 1 roll
+moveto
+0 exch rlineto
+stroke
+} def
+%---------------------------------------------------------------------
+% Set the color:  RGBarray|BWnumber setColor
+/setColor
+{
+dup type (arraytype) eq {
+% We have an array, so it's RGB:
+aload pop
+setrgbcolor
+}{
+% Otherwise, it must be a gray level:
+setgray
+} ifelse
+} bind def
+%---------------------------------------------------------------------
+% Print text centered at a point:  X Y STRING showcenter
+%
+% Centers text horizontally
+/showcenter
+{
+newpath
+0 0 moveto
+% stack X Y STRING
+dup 4 1 roll                          % Put a copy of STRING on bottom
+% stack STRING X Y STRING
+false charpath flattenpath pathbbox   % Compute bounding box of STRING
+% stack STRING X Y Lx Ly Ux Uy
+pop exch pop                          % Discard Y values (... Lx Ux)
+add 2 div neg                         % Compute X offset
+% stack STRING X Y Ox
+0                                     % Use 0 for y offset
+newpath
+moveto
+rmoveto
+show
+} def
+%---------------------------------------------------------------------
+% Print the date, times, resource names, & exterior grid:
+%
+% HEADER TIME1 TIME2 ... TIME12
+%
+% Enter with CellFont selected
+% Leaves the linewidth set to 2 pixels
+/prg
+{
+ResourceTitle 1.40625 32.5 S
+ResourceTitle 1.40625 2.5 S
+TitleFont setfont
+535.1875
+-65.25 45.8125
+% stack (TIME XPOS)
+{
+dup 31.6875 3 index showcenter
+1.6875 3 -1 roll showcenter
+} for
+(2 FOO)21.6875(1 Channel)11.6875
+2 {1.40625 exch S} repeat
+HeadFont setfont
+45.8125 43 S
+P1
+newpath
+0 0 moveto
+567.8125 0 rlineto
+567.8125 40 lineto
+0 40 lineto
+closepath stroke
+111.0625 130.5 556.9375
+{dup 30 10 V 0 10 V} for
+30 20 10
+3 {H} repeat
+P2
+176.3125 130.5 566.8125
+{dup 30 10 V 0 10 V} for
+45.8125 0 40 V
+} def
+/SA
+{
+0.85 setColor
+clippath fill
+0 setColor
+} def
+/SB
+{
+0.85 sStripe-P              % (LLX Bot URX Height)
+neg dup neg 3 -1 roll add     % (Left Bot -Height Right)
+4 -1 roll                     % (Bot -Height Right Left)
+18   3 -1 roll                % (Bot Height Left 18 Right)
+% stack in FOR: (Bot Height X)
+{
+2 index moveto              % (Bot Height)
+dup dup neg rlineto stroke
+} for
+pop pop
+0 setColor
+} def
+/SC
+{
+0.85 sStripe-P              % (LLX Bot URX Height)
+dup neg 5 -1 roll add         % (Bot URX Height Left)
+18   4 -1 roll                % (Bot Height Left 18 Right)
+% stack in FOR: (Bot Height X)
+{
+2 index moveto              % (Bot Height)
+dup dup rlineto stroke
+} for
+pop pop
+0 setColor
+} def
+%%EndResource
+%%EndProlog
+%%BeginSetup
+/CellFont   /Helvetica-iso    findfont  7    scalefont  def
+/HeadFont   /Helvetica-Bold-iso findfont  12 scalefont  def
+/TitleFont  /Helvetica-Bold-iso   findfont  9   scalefont  def
+/ResourceTitle (Channel) def
+%%EndSetup
+%%Page: 1 1
+%%PageBoundingBox: 22 36 590 756
+%%BeginPageSetup
+/pagelevel save def
+userdict begin
+%%EndPageSetup
+22 0 translate
+0 701 translate
+CellFont setfont
+0 setlinecap
+10 130.5 45.8125 20 C
 SA
+(First show) 47.21875 22.5 S
+R
+10 130.5 176.3125 20 C
+(Second show) 177.71875 22.5 S
+R
+10 65.25 306.8125 20 C
+SC
+(First 1/2 show) 308.21875 22.5 S
+R
+10 65.25 372.0625 20 C
+SC
 (Second 1/2) 373.46875 22.5 S
 R
 10 130.5 437.3125 20 C
