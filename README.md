@@ -1,7 +1,7 @@
 PostScript::ScheduleGrid
 ========================
 
-PostScript::ScheduleGrid is a Perl module that creates a grid of TV listings (using PostScript) from schedule data you supply.  An example script that gets data from [XMLTV](http://xmltv.org/) is included.
+PostScript::ScheduleGrid is a Perl module that creates a printable schedule of events (using PostScript) in a grid format often used for TV listings.  You supply the schedule data.  If you're producing actual TV listings, the [PostScript::ScheduleGrid::XMLTV](http://search.cpan.org/perldoc?PostScript::ScheduleGrid::XMLTV) module (distributed separately) can be used to get the schedule data from [XMLTV](http://xmltv.org/).
 
 
 This is a Git repository where development of PostScript::ScheduleGrid takes place.  For more information, visit [PostScript::ScheduleGrid on CPAN](http://search.cpan.org/dist/PostScript-ScheduleGrid/).

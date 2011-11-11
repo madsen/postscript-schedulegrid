@@ -1,9 +1,11 @@
 PostScript::ScheduleGrid version {{$version}}, released {{$date}}
 
 
-This module creates a grid of TV listings (using PostScript) from
-schedule data you supply.  An example script that gets data from XMLTV
-is included.
+This module creates a printable schedule of events (using PostScript)
+in a grid format often used for TV listings.  You supply the schedule
+data.  If you're producing actual TV listings, the
+PostScript::ScheduleGrid::XMLTV module (distributed separately) can be
+used to get the schedule data from XMLTV.
 
 
 
