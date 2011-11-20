@@ -5,6 +5,7 @@ META.json
 META.yml
 Makefile.PL
 README
+examples/pdf.pl
 examples/simple.pl
 lib/PostScript/ScheduleGrid.pm
 lib/PostScript/ScheduleGrid/Role/Style.pm
