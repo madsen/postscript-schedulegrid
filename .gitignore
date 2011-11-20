@@ -13,4 +13,5 @@ PostScript-ScheduleGrid-*/
 *.c
 *.obj
 *.pdb
+*.pdf
 *.ps

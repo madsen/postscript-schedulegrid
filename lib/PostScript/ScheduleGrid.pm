@@ -17,7 +17,7 @@ package PostScript::ScheduleGrid;
 # ABSTRACT: Print a schedule in a grid format
 #---------------------------------------------------------------------
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 # This file is part of {{$dist}} {{$dist_version}} ({{$date}})
 
 use 5.010;
@@ -548,6 +548,8 @@ has ps => (
   lazy_build => 1,
   handles    => ['output'],
 );
+
+*get__PostScript_File = \&ps;   # Alias for PostScript::Convert
 
 sub _build_ps
 {
@@ -1191,6 +1193,10 @@ L<PostScript::ScheduleGrid::XMLTV>, which creates a
 PostScript::ScheduleGrid from TV listings data gathered by
 L<XMLTV>. L<http://xmltv.org>)
 
+If you want to save the schedule as a PDF, you can pass a ScheduleGrid
+object to L<PostScript::Convert/psconvert> (instead of calling the
+C<output> method).
+
 =begin Pod::Loom-group_attr data
 
 =head2 Grid Data
@@ -1218,3 +1224,4 @@ from L<XMLTV>.
 
 =for Pod::Coverage
 ^BUILD$
+get__PostScript_File
