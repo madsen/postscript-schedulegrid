@@ -1,6 +1,6 @@
 Revision history for PostScript-ScheduleGrid
 
-0.02   NOT
+0.02   November 20, 2011
 	- Add get__PostScript_File method for PostScript::Convert compatibility
 	- Require List::Util 1.20 (DateTime overloads comparison operators)
 
