@@ -17,7 +17,7 @@ package PostScript::ScheduleGrid;
 # ABSTRACT: Print a schedule in a grid format
 #---------------------------------------------------------------------
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 # This file is part of {{$dist}} {{$dist_version}} ({{$date}})
 
 use 5.010;
