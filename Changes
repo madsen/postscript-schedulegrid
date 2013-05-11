@@ -1,6 +1,6 @@
 Revision history for PostScript-ScheduleGrid
 
-0.03   NOT
+0.03   May 11, 2013
 	- Clean up type library
 	- Improve documentation
 	- Warn about conflict between MooseX::Types 0.32 and greater
