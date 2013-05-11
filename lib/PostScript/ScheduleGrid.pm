@@ -1193,6 +1193,18 @@ L<PostScript::ScheduleGrid::XMLTV>, which creates a
 PostScript::ScheduleGrid from TV listings data gathered by
 L<XMLTV>. L<http://xmltv.org>)
 
+A schedule is comprised of resources in which events take place at
+specified times.  For a television schedule, each TV channel is a
+resource, and each show is an event.  For a conference, each meeting
+room is a resource, and each talk is an event.
+
+The printed grid has a row for each resource, with times as columns.
+The position and size of an event indicates the time it begins and
+ends, as well as which resource it's associated with.  It's not
+possible for an event to be associated with more than one resource.
+If you need that, you can simulate it by assigning similar events to
+each resource.
+
 If you want to save the schedule as a PDF, you can pass a ScheduleGrid
 object to L<PostScript::Convert/psconvert> (instead of calling the
 C<output> method).

@@ -2,6 +2,7 @@ Revision history for PostScript-ScheduleGrid
 
 0.03   NOT
 	- Clean up type library
+	- Improve documentation
 	- Warn about conflict between MooseX::Types 0.32 and greater
 	  with Moose versions before 2.0800
 
