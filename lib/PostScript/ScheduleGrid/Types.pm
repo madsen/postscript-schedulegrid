@@ -17,7 +17,7 @@ package PostScript::ScheduleGrid::Types;
 # ABSTRACT: type library for PostScript::ScheduleGrid
 #---------------------------------------------------------------------
 
-our $VERSION = '0.01';
+our $VERSION = '0.03';
 # This file is part of {{$dist}} {{$dist_version}} ({{$date}})
 
 use MooseX::Types -declare => [qw(
@@ -28,11 +28,9 @@ use MooseX::Types::Moose qw(ArrayRef Num Str);
 
 use POSIX qw(floor modf);
 
-subtype FontMetrics,
-  as class_type('PostScript::File::Metrics');
+class_type FontMetrics, { class => 'PostScript::File::Metrics' };
 
-subtype Style,
-  as role_type('PostScript::ScheduleGrid::Role::Style');
+role_type Style, { role => 'PostScript::ScheduleGrid::Role::Style' };
 
 #---------------------------------------------------------------------
 subtype Dimension,
