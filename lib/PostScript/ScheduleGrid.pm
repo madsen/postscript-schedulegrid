@@ -17,7 +17,7 @@ package PostScript::ScheduleGrid;
 # ABSTRACT: Print a schedule in a grid format
 #---------------------------------------------------------------------
 
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 # This file is part of {{$dist}} {{$dist_version}} ({{$date}})
 
 use 5.010;
@@ -27,10 +27,10 @@ use MooseX::Types::Moose qw(ArrayRef Bool HashRef Int Num Str);
 use MooseX::Types::DateTime (); # Just load coercions
 use PostScript::ScheduleGrid::Types ':all';
 
-use Class::MOP ();              # for load_class
 use DateTime ();
 use DateTime::TimeZone ();
 use List::Util 1.20 qw(max min); # support overloaded comparisons
+use Module::Runtime qw( require_module );
 use POSIX qw(floor);
 use PostScript::File 2.11 qw(str); # Need improved word wrapping
 
@@ -651,7 +651,7 @@ the default style, you must assign every cell a category.
         $class = "PostScript::ScheduleGrid::Style::$class"
             unless $class =~ s/^=//;
 
-        Class::MOP::load_class($class);
+        require_module($class);
 
         confess("$class does not do PostScript::ScheduleGrid::Role::Style")
             unless $class->DOES('PostScript::ScheduleGrid::Role::Style');

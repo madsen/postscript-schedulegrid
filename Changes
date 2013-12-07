@@ -1,5 +1,8 @@
 Revision history for PostScript-ScheduleGrid
 
+0.04   NOT
+	- Use Module::Runtime instead of Class::MOP::load_class (RT#90961)
+
 0.03   May 11, 2013
 	- Clean up type library
 	- Improve documentation
