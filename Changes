@@ -1,6 +1,6 @@
 Revision history for PostScript-ScheduleGrid
 
-0.04   NOT
+0.04   2013-12-07
 	- Use the function library provided by PostScript::File 2.20
 	- Use Module::Runtime instead of Class::MOP::load_class (RT#90961)
 
