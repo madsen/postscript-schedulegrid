@@ -188,41 +188,6 @@ moveto
 stroke
 } def
 %---------------------------------------------------------------------
-% Set the color:  RGBarray|BWnumber setColor
-/setColor
-{
-dup type (arraytype) eq {
-% We have an array, so it's RGB:
-aload pop
-setrgbcolor
-}{
-% Otherwise, it must be a gray level:
-setgray
-} ifelse
-} bind def
-%---------------------------------------------------------------------
-% Print text centered at a point:  X Y STRING showcenter
-%
-% Centers text horizontally
-/showcenter
-{
-newpath
-0 0 moveto
-% stack X Y STRING
-dup 4 1 roll                          % Put a copy of STRING on bottom
-% stack STRING X Y STRING
-false charpath flattenpath pathbbox   % Compute bounding box of STRING
-% stack STRING X Y Lx Ly Ux Uy
-pop exch pop                          % Discard Y values (... Lx Ux)
-add 2 div neg                         % Compute X offset
-% stack STRING X Y Ox
-0                                     % Use 0 for y offset
-newpath
-moveto
-rmoveto
-show
-} def
-%---------------------------------------------------------------------
 % Print the date, times, resource names, & exterior grid:
 %
 % HEADER TIME1 TIME2 ... TIME12
@@ -238,8 +203,8 @@ TitleFont setfont
 -65.25 45.8125
 % stack (TIME XPOS)
 {
-dup 31.6875 3 index showcenter
-1.6875 3 -1 roll showcenter
+dup 31.6875 3 index showCenter
+1.6875 3 -1 roll showCenter
 } for
 (2 FOO)21.6875(1 Channel)11.6875
 2 {1.40625 exch S} repeat
@@ -388,41 +353,6 @@ moveto
 stroke
 } def
 %---------------------------------------------------------------------
-% Set the color:  RGBarray|BWnumber setColor
-/setColor
-{
-dup type (arraytype) eq {
-% We have an array, so it's RGB:
-aload pop
-setrgbcolor
-}{
-% Otherwise, it must be a gray level:
-setgray
-} ifelse
-} bind def
-%---------------------------------------------------------------------
-% Print text centered at a point:  X Y STRING showcenter
-%
-% Centers text horizontally
-/showcenter
-{
-newpath
-0 0 moveto
-% stack X Y STRING
-dup 4 1 roll                          % Put a copy of STRING on bottom
-% stack STRING X Y STRING
-false charpath flattenpath pathbbox   % Compute bounding box of STRING
-% stack STRING X Y Lx Ly Ux Uy
-pop exch pop                          % Discard Y values (... Lx Ux)
-add 2 div neg                         % Compute X offset
-% stack STRING X Y Ox
-0                                     % Use 0 for y offset
-newpath
-moveto
-rmoveto
-show
-} def
-%---------------------------------------------------------------------
 % Print the date, times, resource names, & exterior grid:
 %
 % HEADER TIME1 TIME2 ... TIME12
@@ -438,8 +368,8 @@ TitleFont setfont
 -65.25 45.8125
 % stack (TIME XPOS)
 {
-dup 31.6875 3 index showcenter
-1.6875 3 -1 roll showcenter
+dup 31.6875 3 index showCenter
+1.6875 3 -1 roll showCenter
 } for
 (2 FOO)21.6875(1 Channel)11.6875
 2 {1.40625 exch S} repeat
@@ -628,41 +558,6 @@ moveto
 stroke
 } def
 %---------------------------------------------------------------------
-% Set the color:  RGBarray|BWnumber setColor
-/setColor
-{
-dup type (arraytype) eq {
-% We have an array, so it's RGB:
-aload pop
-setrgbcolor
-}{
-% Otherwise, it must be a gray level:
-setgray
-} ifelse
-} bind def
-%---------------------------------------------------------------------
-% Print text centered at a point:  X Y STRING showcenter
-%
-% Centers text horizontally
-/showcenter
-{
-newpath
-0 0 moveto
-% stack X Y STRING
-dup 4 1 roll                          % Put a copy of STRING on bottom
-% stack STRING X Y STRING
-false charpath flattenpath pathbbox   % Compute bounding box of STRING
-% stack STRING X Y Lx Ly Ux Uy
-pop exch pop                          % Discard Y values (... Lx Ux)
-add 2 div neg                         % Compute X offset
-% stack STRING X Y Ox
-0                                     % Use 0 for y offset
-newpath
-moveto
-rmoveto
-show
-} def
-%---------------------------------------------------------------------
 % Print the date, times, resource names, & exterior grid:
 %
 % HEADER TIME1 TIME2 ... TIME12
@@ -678,8 +573,8 @@ TitleFont setfont
 -65.25 45.8125
 % stack (TIME XPOS)
 {
-dup 31.6875 3 index showcenter
-1.6875 3 -1 roll showcenter
+dup 31.6875 3 index showCenter
+1.6875 3 -1 roll showCenter
 } for
 (2 FOO)21.6875(1 Channel)11.6875
 2 {1.40625 exch S} repeat

@@ -32,7 +32,7 @@ use DateTime::TimeZone ();
 use List::Util 1.20 qw(max min); # support overloaded comparisons
 use Module::Runtime qw( require_module );
 use POSIX qw(floor);
-use PostScript::File 2.11 qw(str); # Need improved word wrapping
+use PostScript::File 2.20 qw(str); # Need use_functions
 
 use namespace::autoclean -also => qr/^i[[:upper:]]/;
 
@@ -717,45 +717,6 @@ sub _ps_functions
 } def
 
 %---------------------------------------------------------------------
-% Set the color:  RGBarray|BWnumber setColor
-
-/setColor
-{
-  dup type (arraytype) eq {
-    % We have an array, so it's RGB:
-    aload pop
-    setrgbcolor
-  }{
-    % Otherwise, it must be a gray level:
-    setgray
-  } ifelse
-} bind def
-
-%---------------------------------------------------------------------
-% Print text centered at a point:  X Y STRING showcenter
-%
-% Centers text horizontally
-
-/showcenter
-{
-  newpath
-  0 0 moveto
-  % stack X Y STRING
-  dup 4 1 roll                          % Put a copy of STRING on bottom
-  % stack STRING X Y STRING
-  false charpath flattenpath pathbbox   % Compute bounding box of STRING
-  % stack STRING X Y Lx Ly Ux Uy
-  pop exch pop                          % Discard Y values (... Lx Ux)
-  add 2 div neg                         % Compute X offset
-  % stack STRING X Y Ox
-  0                                     % Use 0 for y offset
-  newpath
-  moveto
-  rmoveto
-  show
-} def
-
-%---------------------------------------------------------------------
 % Print the date, times, resource names, & exterior grid:
 %
 % HEADER TIME1 TIME2 ... TIME12
@@ -773,8 +734,8 @@ sub _ps_functions
   -$half_width $title_width
   % stack (TIME XPOS)
   {
-    dup %{$grid_height - $line_height + $title_baseline} 3 index showcenter
-    $title_baseline 3 -1 roll showcenter
+    dup %{$grid_height - $line_height + $title_baseline} 3 index showCenter
+    $title_baseline 3 -1 roll showCenter
   } for
 
 END PS INIT
@@ -923,6 +884,7 @@ sub _run
   $ps->need_resource(font => $self->cell_font, $self->heading_font,
                      $self->title_font);
 
+  $ps->use_functions(qw(setColor showCenter));
   $ps->add_function($self->_ps_functions);
 
   { my $setup = <<'END SETUP';
