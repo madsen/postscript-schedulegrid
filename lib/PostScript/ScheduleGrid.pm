@@ -885,7 +885,7 @@ sub _run
                      $self->title_font);
 
   $ps->use_functions(qw(setColor showCenter));
-  $ps->add_function($self->_ps_functions);
+  $ps->add_procset($self->_ps_functions);
 
   { my $setup = <<'END SETUP';
 /CellFont   /$cell_font-iso    findfont  $cell_font_size    scalefont  def
