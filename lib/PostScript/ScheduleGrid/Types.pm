@@ -17,7 +17,7 @@ package PostScript::ScheduleGrid::Types;
 # ABSTRACT: type library for PostScript::ScheduleGrid
 #---------------------------------------------------------------------
 
-our $VERSION = '0.03';
+# VERSION
 # This file is part of {{$dist}} {{$dist_version}} ({{$date}})
 
 use MooseX::Types -declare => [qw(

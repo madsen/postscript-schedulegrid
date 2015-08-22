@@ -17,7 +17,7 @@ package PostScript::ScheduleGrid::Style::Stripe;
 # ABSTRACT: Striped background style
 #---------------------------------------------------------------------
 
-our $VERSION = '0.01';
+# VERSION
 # This file is part of {{$dist}} {{$dist_version}} ({{$date}})
 
 use 5.010;
@@ -71,6 +71,10 @@ has text_color => (
 sub define_style
 {
   my ($self, $grid) = @_;
+
+  # Hack to allow me to use the development version directly.
+  # $VERSION does not exist in this module until Dist::Zilla inserts it.
+  our $VERSION //= $PostScript::ScheduleGrid::VERSION;
 
   $grid->ps->add_function('PostScript_ScheduleGrid_Style_Stripe',
                           <<'END FUNCTIONS', $VERSION);

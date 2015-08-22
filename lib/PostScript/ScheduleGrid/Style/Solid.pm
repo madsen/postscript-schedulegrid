@@ -17,7 +17,7 @@ package PostScript::ScheduleGrid::Style::Solid;
 # ABSTRACT: Solid background style
 #---------------------------------------------------------------------
 
-our $VERSION = '0.01';
+# VERSION
 # This file is part of {{$dist}} {{$dist_version}} ({{$date}})
 
 use 5.010;

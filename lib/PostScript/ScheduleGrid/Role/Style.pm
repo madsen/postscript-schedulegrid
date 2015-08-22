@@ -17,7 +17,7 @@ package PostScript::ScheduleGrid::Role::Style;
 # ABSTRACT: Something that customizes a cell's appearance
 #---------------------------------------------------------------------
 
-our $VERSION = '0.01';
+# VERSION
 # This file is part of {{$dist}} {{$dist_version}} ({{$date}})
 
 use 5.010;
