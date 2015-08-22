@@ -17,7 +17,7 @@ package PostScript::ScheduleGrid;
 # ABSTRACT: Print a schedule in a grid format
 #---------------------------------------------------------------------
 
-our $VERSION = '0.04';
+our $VERSION = '0.05';
 # This file is part of {{$dist}} {{$dist_version}} ({{$date}})
 
 use 5.010;
@@ -530,6 +530,7 @@ This is the L<PostScript::File> object containing the grid.
 =method output
 
   $rpt->output($filename [, $dir]) # save to file
+  $rpt->output($filehandle)        # print to open filehandle
   $rpt->output()                   # return as string
 
 This method takes the same parameters as L<PostScript::File/output>.
@@ -537,8 +538,12 @@ You can pass a filename (and optional directory name) to store the
 listings in a file.  (No extension will be added to C<$filename>, so it
 should normally end in ".ps".)
 
-If you don't pass a filename, then the PostScript code is returned as
-a string.
+You can also pass an open filehandle (anything recognized by
+L<Scalar::Util/filehandle>) to print the PostScript code to that filehandle.
+The filehandle will not be closed afterwards.
+
+If you don't pass a filename or filehandle, then the PostScript code
+is returned as a string.
 
 =cut
 

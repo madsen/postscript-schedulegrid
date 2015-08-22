@@ -1,5 +1,9 @@
 Revision history for PostScript-ScheduleGrid
 
+0.05   NOT
+	- Document that the output method also accepts an open filehandle.
+	  (This has been true since 0.01; it just wasn't documented here.)
+
 0.04   2013-12-07
 	- Use the function library provided by PostScript::File 2.20
 	- Use Module::Runtime instead of Class::MOP::load_class (RT#90961)
