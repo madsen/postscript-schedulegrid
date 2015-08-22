@@ -1,6 +1,6 @@
 Revision history for PostScript-ScheduleGrid
 
-0.05   NOT
+0.05   2015-08-22
 	- Document that the output method also accepts an open filehandle.
 	  (This has been true since 0.01; it just wasn't documented here.)
 
